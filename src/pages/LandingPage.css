@@ -8,6 +8,16 @@
   padding: var(--space-xl) 0;
 }
 
+.landing__logo {
+  width: 120px;
+  height: 120px;
+  object-fit: contain;
+  margin: 0 auto var(--space-base);
+  display: block;
+  filter: drop-shadow(0 0 22px rgba(34, 211, 238, 0.45)) drop-shadow(0 0 40px rgba(236, 72, 153, 0.3));
+  animation: float 4s ease-in-out infinite;
+}
+
 /* ── Background Orbs ── */
 .landing__bg-orbs {
   position: absolute;

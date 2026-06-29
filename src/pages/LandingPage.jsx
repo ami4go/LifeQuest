@@ -1,5 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import logo from '../assets/logo.png';
 import './LandingPage.css';
 
 export default function LandingPage() {
@@ -32,6 +33,9 @@ export default function LandingPage() {
       </div>
 
       <div className="landing__content container">
+        {/* Logo */}
+        <img src={logo} alt="LifeQuest AI" className="landing__logo animate-fade-in-scale" />
+
         {/* Hero badge */}
         <div className="landing__badge animate-fade-in-down">
           <span className="landing__badge-dot" />
@@ -71,7 +75,7 @@ export default function LandingPage() {
             <span>📸</span> Proof of Work
           </div>
           <div className="landing__feature-pill">
-            <span>🐉</span> Boss Battles
+            <span>🪙</span> Coins & Rewards
           </div>
           <div className="landing__feature-pill">
             <span>🏆</span> Rank & Badges

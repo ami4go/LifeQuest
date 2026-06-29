@@ -1,23 +1,23 @@
 import { useAuth } from '../contexts/AuthContext';
 import { useQuests } from '../contexts/QuestContext';
-import { getLevelInfo, getNextRank } from '../utils/levelSystem';
-import { ARCHETYPES, BADGES, SEASON_BADGES, MASTERY_BADGES } from '../utils/constants';
+import { getLevelInfo } from '../utils/levelSystem';
+import { ARCHETYPES, BADGES } from '../utils/constants';
+import { XP_PER_LEVEL } from '../utils/constants';
+import { Target, Sparkles, Coins, ScrollText, Settings, LogOut, ChevronRight } from 'lucide-react';
 import './ProfilePage.css';
+
+const BADGE_TINTS = ['badge-chip--cyan', 'badge-chip--gold', 'badge-chip--magenta', 'badge-chip--success'];
 
 export default function ProfilePage() {
   const { userData, logout } = useAuth();
-  const { completedQuests, quests } = useQuests();
+  const { completedQuests } = useQuests();
   const levelInfo = getLevelInfo(userData?.xp || 0);
-  const nextRank = getNextRank(levelInfo.level);
   const archetype = userData?.archetype?.primary ? ARCHETYPES[userData.archetype.primary] : null;
   const secondaryArchetype = userData?.archetype?.secondary ? ARCHETYPES[userData.archetype.secondary] : null;
 
-  const totalQuests = quests.length;
-  const completionRate = totalQuests > 0 ? Math.round((completedQuests.length / totalQuests) * 100) : 0;
   const focusLockedCompleted = completedQuests.filter(q => q.focusLocked).length;
   const proofsSubmitted = completedQuests.filter(q => q.proofSubmitted).length;
 
-  // Determine earned badges
   const earnedBadges = [];
   if (completedQuests.length >= 1) earnedBadges.push(BADGES.first_quest);
   if (userData?.streaks?.focus >= 7) earnedBadges.push(BADGES.streak_7);
@@ -26,214 +26,123 @@ export default function ProfilePage() {
   if (proofsSubmitted >= 5) earnedBadges.push(BADGES.proof_master);
   if (levelInfo.level >= 10) earnedBadges.push(BADGES.level_10);
   if (completedQuests.some(q => q.difficulty >= 5)) earnedBadges.push(BADGES.five_star_quest);
+  if (earnedBadges.length === 0) earnedBadges.push(BADGES.first_quest);
 
-  // Check season badges
-  const earnedSeasonBadges = [];
-  const now = new Date();
-  const userCreated = userData?.createdAt?.toDate ? userData.createdAt.toDate() : new Date();
-  Object.values(SEASON_BADGES).forEach(sb => {
-    const start = new Date(sb.startDate);
-    const end = new Date(sb.endDate);
-    end.setHours(23, 59, 59);
-    if (sb.id === 'early_adopter' || sb.id === 'hackathon_hero') {
-      if (userCreated >= start && userCreated <= end) earnedSeasonBadges.push(sb);
-    } else if (sb.id === 'summer_grinder_2026') {
-      if (now >= start && now <= end && completedQuests.length >= sb.requirement) earnedSeasonBadges.push(sb);
-    }
-  });
+  const initial = (userData?.displayName || 'A').trim().charAt(0).toUpperCase();
 
   return (
-    <div className="profile" id="profile-page">
-      {/* Hero Card */}
-      <div className="profile__hero glass-card glass-card--glow-purple glass-card--no-hover animate-fade-in-up">
-        <div className="profile__avatar">
-          {userData?.photoURL ? (
-            <img src={userData.photoURL} alt="avatar" className="profile__avatar-img" />
-          ) : (
-            <span className="profile__avatar-fallback">{levelInfo.rank.emoji}</span>
-          )}
-        </div>
-        <h2 className="h3">{userData?.displayName || 'Adventurer'}</h2>
-        <div className="profile__rank-row">
-          <span className="profile__rank-badge" style={{ borderColor: levelInfo.rank.color }}>
-            {levelInfo.rank.emoji} {levelInfo.rank.title}
-          </span>
-          <span className="text-sm text-muted">Level {levelInfo.level}</span>
-        </div>
+    <div className="profile2" id="profile-page">
+      {/* Player card */}
+      <section className="profile2__pad">
+        <div className="hud-panel player-card">
+          <div className="player-card__glow player-card__glow--a" />
+          <div className="player-card__glow player-card__glow--b" />
 
-        {/* XP Bar */}
-        <div className="profile__xp-section">
-          <div className="flex justify-between items-center mb-xs">
-            <span className="text-xs text-muted">XP to Level {levelInfo.level + 1}</span>
-            <span className="text-xs text-cyan font-bold">{levelInfo.xpInLevel} / 1000</span>
-          </div>
-          <div className="progress-bar progress-bar--lg">
-            <div className="progress-bar__fill" style={{ width: `${levelInfo.progress}%` }} />
-          </div>
-        </div>
+          <div className="player-card__inner">
+            <div className="player-card__avatar-wrap">
+              <div className="player-card__avatar">
+                {userData?.photoURL
+                  ? <img src={userData.photoURL} alt="" className="player-card__avatar-img" />
+                  : initial}
+              </div>
+              <span className="player-card__lv">LV {levelInfo.level}</span>
+            </div>
 
-        <div className="profile__total-xp">
-          <span className="text-gradient font-extrabold" style={{ fontSize: 'var(--font-size-2xl)' }}>
-            {userData?.xp || 0}
-          </span>
-          <span className="text-xs text-muted">Total XP</span>
-        </div>
+            <h1 className="player-card__name">{userData?.displayName || 'Adventurer'}</h1>
+            <p className="player-card__class">{levelInfo.rank.title} · Operator Class</p>
 
-        {/* Coins */}
-        <div className="profile__coins-row">
-          <div className="profile__coin-stat">
-            <span>🪙</span>
-            <span className="font-bold" style={{ color: '#fbbf24' }}>{userData?.coins || 0}</span>
-            <span className="text-xs text-muted">Coins</span>
-          </div>
-          <div className="profile__coin-stat">
-            <span>📜</span>
-            <span className="font-bold">{userData?.certificatesUploaded || 0}</span>
-            <span className="text-xs text-muted">Certificates</span>
+            {/* XP */}
+            <div className="player-card__xp">
+              <div className="player-card__xp-row">
+                <span className="text-muted">XP to Level {levelInfo.level + 1}</span>
+                <span className="text-accent">{levelInfo.xpInLevel} / {XP_PER_LEVEL}</span>
+              </div>
+              <div className="player-card__xp-bar">
+                <div className="player-card__xp-fill shimmer-bar" style={{ width: `${levelInfo.progress}%` }} />
+              </div>
+            </div>
+
+            <div className="player-card__stats">
+              <MiniStat icon={Sparkles} tint="text-accent" value={(userData?.xp || 0).toLocaleString()} label="Total XP" />
+              <MiniStat icon={Coins} tint="text-gold" value={(userData?.coins || 0).toLocaleString()} label="Coins" />
+              <MiniStat icon={ScrollText} tint="text-magenta" value={userData?.certificatesUploaded || 0} label="Certs" />
+            </div>
           </div>
         </div>
-      </div>
+      </section>
 
       {/* Archetype */}
-      {archetype && (
-        <div className="profile__archetype glass-card glass-card--no-hover animate-fade-in-up delay-1">
-          <h4 className="text-sm font-semibold text-muted mb-sm">YOUR ARCHETYPE</h4>
-          <div className="profile__archetype-main">
-            <span className="profile__archetype-emoji">{archetype.emoji}</span>
-            <div>
-              <h3 className="h5" style={{ color: archetype.color }}>{archetype.name}</h3>
-              <p className="text-xs text-muted">{archetype.description}</p>
+      <section className="profile2__pad">
+        <div className="section-head">
+          <h2 className="section-head__title"><Target size={16} className="text-accent" /> Your Archetype</h2>
+        </div>
+        {archetype ? (
+          <div className="hud-panel archetype-card">
+            <div className="archetype-card__row">
+              <div className="archetype-card__icon" style={{ background: 'rgba(192,132,252,0.15)' }}>
+                <span style={{ fontSize: '1.5rem' }}>{archetype.emoji}</span>
+              </div>
+              <div className="archetype-card__body">
+                <div className="archetype-card__head">
+                  <span className="archetype-card__chip">Epic</span>
+                  <h3 className="archetype-card__name">{archetype.name}</h3>
+                </div>
+                <p className="archetype-card__desc">{archetype.description} {archetype.fix}</p>
+              </div>
             </div>
+            {secondaryArchetype && (
+              <div className="archetype-card__secondary">
+                <span className="archetype-card__sec-label">Secondary</span>
+                <span className="archetype-card__sec-name">{secondaryArchetype.name}</span>
+              </div>
+            )}
           </div>
-          {secondaryArchetype && (
-            <div className="profile__archetype-secondary mt-md">
-              <span>{secondaryArchetype.emoji}</span>
-              <span className="text-xs text-muted">Secondary: {secondaryArchetype.name}</span>
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* Stats Grid */}
-      <div className="profile__stats grid grid-cols-2 animate-fade-in-up delay-2">
-        <div className="profile__stat-card glass-card glass-card--no-hover">
-          <span className="profile__stat-value">{completedQuests.length}</span>
-          <span className="profile__stat-label">Quests Done</span>
-        </div>
-        <div className="profile__stat-card glass-card glass-card--no-hover">
-          <span className="profile__stat-value">{completionRate}%</span>
-          <span className="profile__stat-label">Completion Rate</span>
-        </div>
-        <div className="profile__stat-card glass-card glass-card--no-hover">
-          <span className="profile__stat-value">{focusLockedCompleted}</span>
-          <span className="profile__stat-label">Focus Locks Won</span>
-        </div>
-        <div className="profile__stat-card glass-card glass-card--no-hover">
-          <span className="profile__stat-value">{proofsSubmitted}</span>
-          <span className="profile__stat-label">Proofs Verified</span>
-        </div>
-      </div>
-
-      {/* Streaks */}
-      <div className="profile__streaks glass-card glass-card--no-hover animate-fade-in-up delay-3">
-        <h4 className="text-sm font-semibold text-muted mb-base">ACTIVE STREAKS</h4>
-        <div className="profile__streak-row">
-          <span>🔥 Focus Streak</span>
-          <span className="font-bold">{userData?.streaks?.focus || 0} days</span>
-        </div>
-        <div className="profile__streak-row">
-          <span>📈 Growth Streak</span>
-          <span className="font-bold">{userData?.streaks?.growth || 0} days</span>
-        </div>
-        <div className="profile__streak-row">
-          <span>✅ Commitment Streak</span>
-          <span className="font-bold">{userData?.streaks?.commitment || 0} days</span>
-        </div>
-        <div className="profile__streak-row">
-          <span>🦅 Recovery Streak</span>
-          <span className="font-bold">{userData?.streaks?.recovery || 0} days</span>
-        </div>
-      </div>
+        ) : (
+          <div className="hud-panel archetype-card archetype-card--empty">
+            <p className="text-sm text-muted">Complete onboarding to reveal your archetype.</p>
+          </div>
+        )}
+      </section>
 
       {/* Badges */}
-      <div className="profile__badges animate-fade-in-up delay-4">
-        <h4 className="text-sm font-semibold text-muted mb-base">ACHIEVEMENTS</h4>
-        <div className="profile__badge-grid">
-          {Object.values(BADGES).map((badge) => {
-            const earned = earnedBadges.some(b => b.id === badge.id);
-            return (
-              <div
-                key={badge.id}
-                className={`profile__badge ${earned ? 'profile__badge--earned' : ''}`}
-                title={badge.description}
-              >
-                <span className="profile__badge-icon">{badge.icon}</span>
-                <span className="profile__badge-name">{badge.name}</span>
-              </div>
-            );
-          })}
+      <section className="profile2__pad">
+        <div className="section-head">
+          <h2 className="section-head__title">Badges</h2>
         </div>
-      </div>
-
-      {/* Mastery Badges */}
-      <div className="profile__badges animate-fade-in-up delay-4">
-        <h4 className="text-sm font-semibold text-muted mb-base">🏅 MASTERY BADGES</h4>
-        <div className="profile__badge-grid">
-          {Object.values(MASTERY_BADGES).map((badge) => {
-            const earned = (userData?.badges || []).includes(badge.id);
-            return (
-              <div
-                key={badge.id}
-                className={`profile__badge ${earned ? 'profile__badge--earned' : ''}`}
-                title={badge.description}
-              >
-                <span className="profile__badge-icon">{badge.icon}</span>
-                <span className="profile__badge-name">{badge.name}</span>
-              </div>
-            );
-          })}
+        <div className="badge-chips">
+          {earnedBadges.map((b, i) => (
+            <span key={b.id} className={`badge-chip ${BADGE_TINTS[i % BADGE_TINTS.length]}`}>
+              {b.icon} {b.name}
+            </span>
+          ))}
         </div>
-      </div>
+      </section>
 
-      {/* Season Badges */}
-      <div className="profile__badges animate-fade-in-up delay-5">
-        <h4 className="text-sm font-semibold text-muted mb-base">🏅 SEASON BADGES</h4>
-        <div className="profile__badge-grid">
-          {Object.values(SEASON_BADGES).map((badge) => {
-            const earned = earnedSeasonBadges.some(b => b.id === badge.id);
-            return (
-              <div
-                key={badge.id}
-                className={`profile__badge ${earned ? 'profile__badge--earned' : ''}`}
-                title={badge.description}
-              >
-                <span className="profile__badge-icon">{badge.icon}</span>
-                <span className="profile__badge-name">{badge.name}</span>
-                <span className="text-xs text-tertiary">{badge.season}</span>
-              </div>
-            );
-          })}
-        </div>
-      </div>
+      {/* Actions */}
+      <section className="profile2__pad">
+        <ul className="hud-panel action-list">
+          <li>
+            <button className="action-row">
+              <Settings size={16} /><span>Settings</span><ChevronRight size={16} className="action-row__chev" />
+            </button>
+          </li>
+          <li>
+            <button className="action-row action-row--danger" onClick={logout}>
+              <LogOut size={16} /><span>Sign out</span><ChevronRight size={16} className="action-row__chev" />
+            </button>
+          </li>
+        </ul>
+      </section>
+    </div>
+  );
+}
 
-      {/* Next Rank */}
-      {nextRank && (
-        <div className="profile__next-rank glass-card glass-card--no-hover animate-fade-in-up delay-6">
-          <span className="text-xs text-muted">NEXT RANK</span>
-          <div className="profile__next-rank-info">
-            <span style={{ fontSize: '1.5rem' }}>{nextRank.emoji}</span>
-            <div>
-              <span className="font-bold" style={{ color: nextRank.color }}>{nextRank.title}</span>
-              <span className="text-xs text-muted"> at Level {nextRank.level}</span>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Logout */}
-      <button className="btn btn--ghost btn--full mt-lg animate-fade-in delay-6" onClick={logout}>
-        Sign Out
-      </button>
+function MiniStat({ icon: Icon, tint, value, label }) {
+  return (
+    <div className="mini-stat">
+      <Icon size={16} className={`mini-stat__icon ${tint}`} />
+      <div className="mini-stat__value">{value}</div>
+      <div className="mini-stat__label">{label}</div>
     </div>
   );
 }

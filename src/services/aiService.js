@@ -369,6 +369,75 @@ Return ONLY valid JSON:
 }
 
 /**
+ * AI-decided penalty for dropping / missing a task or duel challenge.
+ * The model weighs task complexity AND the user's track record, then returns
+ * an HP (XP) loss and coin loss with a short human-readable rationale.
+ *
+ * Falls back to a deterministic formula if the AI call fails.
+ */
+export async function decidePenalty({ action, taskTitle, difficulty = 3, stakeHP = 0, userStats = {} }) {
+  const {
+    tasksDropped = 0, perfectStreak = 0, level = 0,
+    completionRate = 0, onTimeStreak = 0,
+  } = userStats;
+
+  const prompt = `You are LifeQuest AI's Fairness Engine. Decide a fair penalty when a user ${action === 'late' ? 'submits a task LATE' : 'DROPS/abandons a task'}.
+
+TASK: "${taskTitle || 'a task'}"
+DIFFICULTY: ${difficulty}/5
+DUEL STAKE (HP), if any: ${stakeHP}
+
+USER TRACK RECORD:
+- Tasks dropped before: ${tasksDropped}
+- Current perfect streak: ${perfectStreak}
+- On-time streak: ${onTimeStreak}
+- Level: ${level}
+- Completion rate: ${completionRate}%
+
+POLICY:
+- Repeat droppers / low completion rate → harsher penalty.
+- Strong streaks / high completion rate → more lenient (give grace).
+- Higher difficulty tasks → slightly softer (they were hard).
+- hpLoss range 10-150. coinLoss range 0-60. Keep it motivating, never crushing.
+
+Return ONLY valid JSON:
+{
+  "hpLoss": 40,
+  "coinLoss": 15,
+  "severity": "light|moderate|harsh",
+  "reason": "One short sentence explaining the decision to the user."
+}`;
+
+  try {
+    const response = await genAI.models.generateContent({
+      model: geminiModel,
+      contents: prompt,
+      config: { responseMimeType: 'application/json', temperature: 0.4 },
+    });
+    const out = JSON.parse(response.text);
+    return {
+      hpLoss: Math.max(0, Math.min(150, Math.round(out.hpLoss ?? 40))),
+      coinLoss: Math.max(0, Math.min(60, Math.round(out.coinLoss ?? 10))),
+      severity: out.severity || 'moderate',
+      reason: out.reason || 'Penalty applied for an incomplete commitment.',
+    };
+  } catch (error) {
+    console.error('Penalty decision failed, using fallback:', error);
+    // Deterministic fallback
+    const base = action === 'late' ? 25 : 40;
+    const repeatMult = 1 + Math.min(tasksDropped, 5) * 0.15;
+    const grace = perfectStreak >= 5 ? 0.6 : 1;
+    const hpLoss = Math.max(10, Math.min(150, Math.round(base * repeatMult * grace)));
+    return {
+      hpLoss,
+      coinLoss: Math.max(0, Math.min(60, Math.round(hpLoss * 0.25))),
+      severity: hpLoss > 80 ? 'harsh' : hpLoss > 40 ? 'moderate' : 'light',
+      reason: 'Penalty calculated from task difficulty and your recent track record.',
+    };
+  }
+}
+
+/**
  * Suggest duel challenges based on category and preferences
  */
 export async function suggestDuelChallenges(category, playerCount, difficulty) {
@@ -570,5 +639,3 @@ Return ONLY valid JSON in this exact format:
     throw error;
   }
 }
-
-

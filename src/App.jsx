@@ -1,6 +1,8 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { QuestProvider } from './contexts/QuestContext';
+import { ThemeProvider } from './contexts/ThemeContext';
+import { NotificationProvider } from './contexts/NotificationContext';
 import LandingPage from './pages/LandingPage';
 import OnboardingPage from './pages/OnboardingPage';
 import GoalIntakePage from './pages/GoalIntakePage';
@@ -10,10 +12,10 @@ import ProfilePage from './pages/ProfilePage';
 import SchedulePage from './pages/SchedulePage';
 import DuelPage from './pages/DuelPage';
 import RewardsPage from './pages/RewardsPage';
-import BossBattlePage from './pages/BossBattlePage';
+import BadgesPage from './pages/BadgesPage';
+import SettingsPage from './pages/SettingsPage';
 import LeaderboardPage from './pages/LeaderboardPage';
-import Header from './components/layout/Header';
-import Sidebar from './components/layout/Sidebar';
+import MobileShell from './components/layout/MobileShell';
 import './index.css';
 
 function ProtectedRoute({ children, requireOnboarding = true }) {
@@ -40,17 +42,7 @@ function ProtectedRoute({ children, requireOnboarding = true }) {
 }
 
 function AppLayout({ children }) {
-  return (
-    <>
-      <Header />
-      <Sidebar />
-      <main className="page">
-        <div className="page-content container">
-          {children}
-        </div>
-      </main>
-    </>
-  );
+  return <MobileShell>{children}</MobileShell>;
 }
 
 function AppRoutes() {
@@ -173,11 +165,22 @@ function AppRoutes() {
       />
 
       <Route
-        path="/boss/:missionId"
+        path="/badges"
         element={
           <ProtectedRoute>
             <AppLayout>
-              <BossBattlePage />
+              <BadgesPage />
+            </AppLayout>
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/settings"
+        element={
+          <ProtectedRoute>
+            <AppLayout>
+              <SettingsPage />
             </AppLayout>
           </ProtectedRoute>
         }
@@ -203,11 +206,15 @@ function AppRoutes() {
 export default function App() {
   return (
     <BrowserRouter>
-      <AuthProvider>
-        <QuestProvider>
-          <AppRoutes />
-        </QuestProvider>
-      </AuthProvider>
+      <ThemeProvider>
+        <AuthProvider>
+          <NotificationProvider>
+            <QuestProvider>
+              <AppRoutes />
+            </QuestProvider>
+          </NotificationProvider>
+        </AuthProvider>
+      </ThemeProvider>
     </BrowserRouter>
   );
 }

@@ -136,7 +136,7 @@ export async function joinDuel(duelId, userId, userName, userPhoto, userEmail) {
 /**
  * Submit a challenge result within a duel
  */
-export async function submitChallengeResult(duelId, userId, challengeId, score, aiEvaluation) {
+export async function submitChallengeResult(duelId, userId, challengeId, score, aiEvaluation, submission = null) {
   const duelSnap = await getDoc(doc(db, 'duels', duelId));
   if (!duelSnap.exists()) throw new Error('Duel not found');
   const duel = duelSnap.data();
@@ -150,6 +150,8 @@ export async function submitChallengeResult(duelId, userId, challengeId, score, 
   completedChallenges[challengeId] = {
     score,
     aiEvaluation,
+    // Persist a lightweight record of the submission so opponents can see it.
+    submission: submission ? { text: submission.text || '', type: submission.type || 'text' } : null,
     completedAt: Timestamp.now(),
   };
   participant.completedChallenges = completedChallenges;
@@ -264,27 +266,41 @@ export async function completeDuelSide(duelId, userId) {
  */
 export async function getUserDuels(userId, userEmail) {
   const duelsRef = collection(db, 'duels');
-
-  // Query for duels where user is challenger/creator
-  const challengerQuery = query(duelsRef, where('challengerId', '==', userId));
-  const challengerSnap = await getDocs(challengerQuery);
-
-  // Query for duels where user is opponent (by ID)
-  const opponentQuery = query(duelsRef, where('opponentId', '==', userId));
-  const opponentSnap = await getDocs(opponentQuery);
-
-  // Query for pending duels sent to user's email
-  const pendingQuery = query(
-    duelsRef,
-    where('opponentEmail', '==', userEmail.toLowerCase()),
-    where('status', '==', 'pending')
-  );
-  const pendingSnap = await getDocs(pendingQuery);
-
   const all = new Map();
-  [challengerSnap, opponentSnap, pendingSnap].forEach(snap => {
-    snap.docs.forEach(d => all.set(d.id, { id: d.id, ...d.data() }));
-  });
+
+  try {
+    // Query for duels where user is challenger/creator
+    const challengerQuery = query(duelsRef, where('challengerId', '==', userId));
+    const challengerSnap = await getDocs(challengerQuery);
+    challengerSnap.docs.forEach(d => all.set(d.id, { id: d.id, ...d.data() }));
+  } catch (e) { console.warn('Challenger query failed:', e.message); }
+
+  try {
+    // Query for duels where user is opponent (by ID)
+    const opponentQuery = query(duelsRef, where('opponentId', '==', userId));
+    const opponentSnap = await getDocs(opponentQuery);
+    opponentSnap.docs.forEach(d => all.set(d.id, { id: d.id, ...d.data() }));
+  } catch (e) { console.warn('Opponent query failed:', e.message); }
+
+  try {
+    // Query for duels sent to user's email (legacy single opponent field)
+    // Use simple single-field query, filter for pending client-side
+    const emailQuery = query(duelsRef, where('opponentEmail', '==', userEmail.toLowerCase()));
+    const emailSnap = await getDocs(emailQuery);
+    emailSnap.docs.forEach(d => {
+      const data = d.data();
+      if (data.status === 'pending') {
+        all.set(d.id, { id: d.id, ...data });
+      }
+    });
+  } catch (e) { console.warn('Email query failed:', e.message); }
+
+  try {
+    // Query for duels where user is in invitedEmails (new multi-player system)
+    const invitedQuery = query(duelsRef, where('invitedEmails', 'array-contains', userEmail.toLowerCase()));
+    const invitedSnap = await getDocs(invitedQuery);
+    invitedSnap.docs.forEach(d => all.set(d.id, { id: d.id, ...d.data() }));
+  } catch (e) { console.warn('Invited query failed:', e.message); }
 
   return Array.from(all.values()).sort((a, b) => {
     const dateA = a.createdAt?.toDate?.() || new Date(0);
@@ -296,7 +312,7 @@ export async function getUserDuels(userId, userEmail) {
 /**
  * Drop a challenge in an active duel
  */
-export async function dropDuelChallenge(duelId, userId, challengeId) {
+export async function dropDuelChallenge(duelId, userId, challengeId, penalty = null) {
   const duelSnap = await getDoc(doc(db, 'duels', duelId));
   if (!duelSnap.exists()) throw new Error('Duel not found');
   const duel = duelSnap.data();
@@ -307,7 +323,7 @@ export async function dropDuelChallenge(duelId, userId, challengeId) {
   const updatedParticipants = [...duel.participants];
   const participant = { ...updatedParticipants[participantIdx] };
   const completedChallenges = { ...(participant.completedChallenges || {}) };
-  
+
   // Mark as dropped (score = 0, dropped = true)
   completedChallenges[challengeId] = {
     score: 0,
@@ -322,30 +338,47 @@ export async function dropDuelChallenge(duelId, userId, challengeId) {
     participants: updatedParticipants
   });
 
-  // Apply HP penalty and tasksDropped to the user
+  // Apply the AI-decided penalty (HP=XP + coins), or fall back to the constant.
+  const hpLoss = penalty?.hpLoss ?? PENALTY_CONSTANTS.DUEL_DROP_HP;
+  const coinLoss = penalty?.coinLoss ?? 0;
   const userRef = doc(db, 'users', userId);
   const userSnap = await getDoc(userRef);
-  
+
   if (userSnap.exists()) {
     const userData = userSnap.data();
     const drops = (userData.tasksDropped || 0) + 1;
     const userBadges = userData.badges || [];
-    // Duels might use XP for ranking, or maybe just subtract XP/Coins. Wait, plan says "HP reduction". But our user data doesn't have an "HP" stat. We use XP. Let's just deduct XP.
-    let newXP = (userData.xp || 0) - PENALTY_CONSTANTS.DUEL_DROP_HP;
-    if (newXP < 0) newXP = 0;
+    const newXP = Math.max(0, (userData.xp || 0) - hpLoss);
+    const newCoins = Math.max(0, (userData.coins || 0) - coinLoss);
 
     const updates = {
       xp: newXP,
       level: Math.floor(newXP / 1000),
+      coins: newCoins,
       tasksDropped: drops,
       perfectStreak: 0,
     };
 
-    if (drops >= PENALTY_CONSTANTS.MAX_DROPS_BEFORE_SLOTH && !userBadges.includes('the_sloth')) {
-      updates.badges = [...userBadges, 'the_sloth'];
+    const newBadges = [...userBadges];
+    if (!newBadges.includes('the_ghost')) newBadges.push('the_ghost'); // abandoned a duel
+    if (drops >= PENALTY_CONSTANTS.MAX_DROPS_BEFORE_SLOTH && !newBadges.includes('the_sloth')) {
+      newBadges.push('the_sloth');
     }
+    if (newBadges.length !== userBadges.length) updates.badges = newBadges;
 
     await updateDoc(userRef, updates);
+
+    // Log the coin penalty so it appears in Rewards history
+    if (coinLoss > 0) {
+      await addDoc(collection(db, 'coinTransactions'), {
+        userId,
+        amount: -Math.min(userData.coins || 0, coinLoss),
+        type: 'spend',
+        reason: 'Dropped a duel challenge',
+        createdAt: serverTimestamp(),
+      });
+    }
   }
+  return { hpLoss, coinLoss };
 }
 

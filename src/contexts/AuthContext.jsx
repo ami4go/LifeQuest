@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, useEffect } from 'react';
 import { onAuthStateChanged, signInWithPopup, signOut } from 'firebase/auth';
-import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
+import { doc, getDoc, setDoc, onSnapshot, serverTimestamp } from 'firebase/firestore';
 import { auth, googleProvider, db } from '../config/firebase';
 
 const AuthContext = createContext(null);
@@ -17,29 +17,27 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    let unsubDoc = null;
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+      if (unsubDoc) { unsubDoc(); unsubDoc = null; }
+
       if (firebaseUser) {
         setUser(firebaseUser);
-        // Fetch or create user document
         const userRef = doc(db, 'users', firebaseUser.uid);
         const userSnap = await getDoc(userRef);
 
         if (userSnap.exists()) {
           const currentData = userSnap.data();
-          // Sync photoURL and displayName if they changed (e.g. Google profile update)
+          // Sync photoURL/displayName if they changed (e.g. Google profile update)
           if (currentData.photoURL !== firebaseUser.photoURL || currentData.displayName !== firebaseUser.displayName) {
-            const updates = {
+            await setDoc(userRef, {
               photoURL: firebaseUser.photoURL || currentData.photoURL || '',
-              displayName: firebaseUser.displayName || currentData.displayName || 'Adventurer'
-            };
-            await setDoc(userRef, updates, { merge: true });
-            setUserData({ ...currentData, ...updates });
-          } else {
-            setUserData(currentData);
+              displayName: firebaseUser.displayName || currentData.displayName || 'Adventurer',
+            }, { merge: true });
           }
         } else {
           // Create new user profile
-          const newUser = {
+          await setDoc(userRef, {
             displayName: firebaseUser.displayName || 'Adventurer',
             email: firebaseUser.email,
             photoURL: firebaseUser.photoURL || '',
@@ -51,30 +49,33 @@ export function AuthProvider({ children }) {
             totalCoinsEarned: 0,
             tasksDropped: 0,
             perfectStreak: 0,
+            onTimeStreak: 0,
+            duelWins: 0,
             certificatesUploaded: 0,
             streaks: {
-              focus: 0,
-              growth: 0,
-              commitment: 0,
-              recovery: 0,
-              shieldAvailable: false,
-              lastActiveDate: null,
+              focus: 0, growth: 0, commitment: 0, recovery: 0,
+              shieldAvailable: false, lastActiveDate: null,
             },
             badges: [],
+            secretCounters: {},
             onboardingComplete: false,
             createdAt: serverTimestamp(),
-          };
-          await setDoc(userRef, newUser);
-          setUserData(newUser);
+          });
         }
+
+        // Live-subscribe to the user doc so XP / coins / badges update everywhere instantly.
+        unsubDoc = onSnapshot(userRef, (d) => {
+          if (d.exists()) setUserData(d.data());
+          setLoading(false);
+        }, () => setLoading(false));
       } else {
         setUser(null);
         setUserData(null);
+        setLoading(false);
       }
-      setLoading(false);
     });
 
-    return () => unsubscribe();
+    return () => { if (unsubDoc) unsubDoc(); unsubscribe(); };
   }, []);
 
   const loginWithGoogle = async () => {

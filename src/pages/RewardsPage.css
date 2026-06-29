@@ -3,8 +3,102 @@
    Store, Badges, History
    ═══════════════════════════════════════════════════════ */
 
+/* ── Reworked Redeem Coins screen ── */
+.rewards2__head { padding-bottom: 1rem; }
+.rewards2__counts {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+}
+.rewards2__count {
+  padding: 0.75rem 0.5rem;
+  border-radius: var(--radius-lg);
+  text-align: center;
+}
+.rewards2__count svg { margin: 0 auto; display: block; }
+.rewards2__count-val {
+  margin-top: 0.35rem;
+  font-family: var(--font-display);
+  font-size: 1.25rem;
+  font-weight: 900;
+  line-height: 1;
+}
+.rewards2__count-label {
+  margin-top: 0.2rem;
+  font-family: var(--font-mono-ui);
+  font-size: 0.5625rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--text-secondary);
+}
+
+.rewards2__section { margin-bottom: 1.75rem; }
+.rewards2__store {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.75rem;
+}
+.rewards2__item {
+  padding: 1rem;
+  border-radius: var(--radius-lg);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 0.35rem;
+}
+.rewards2__item--locked { opacity: 0.6; }
+.rewards2__item-emoji { font-size: 2rem; }
+.rewards2__item-name { font-family: var(--font-display); font-weight: 700; font-size: 0.875rem; }
+.rewards2__item-desc { font-size: 0.6875rem; color: var(--text-secondary); flex: 1; }
+.rewards2__item-price {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-family: var(--font-mono-ui);
+  font-weight: 700;
+  font-size: 0.875rem;
+  margin: 0.25rem 0;
+}
+
+.rewards2__history { list-style: none; display: flex; flex-direction: column; gap: 0.5rem; }
+.rewards2__tx {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem;
+  border-radius: var(--radius-md);
+}
+.rewards2__tx-dot {
+  display: grid;
+  place-items: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  flex-shrink: 0;
+  border-radius: var(--radius-full);
+  font-weight: 900;
+  font-size: 0.875rem;
+}
+.rewards2__tx-dot[data-kind="earn"] { background: rgba(34, 197, 94, 0.15); color: var(--color-success); }
+.rewards2__tx-dot[data-kind="spend"] { background: rgba(239, 68, 68, 0.15); color: var(--color-danger); }
+.rewards2__tx-info { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.rewards2__tx-reason { font-size: 0.8125rem; font-weight: 600; }
+.rewards2__tx-date { font-family: var(--font-mono-ui); font-size: 0.625rem; color: var(--text-tertiary); }
+.rewards2__tx-amt { font-family: var(--font-mono-ui); font-weight: 700; font-variant-numeric: tabular-nums; }
+
+.rewards2__empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  text-align: center;
+  padding: 2rem 1.5rem;
+  border-radius: var(--radius-lg);
+}
+
 .rewards-page {
-  padding-bottom: 6rem;
+  padding: var(--space-lg) 1rem 6rem;
 }
 
 /* ── Hero Section ── */

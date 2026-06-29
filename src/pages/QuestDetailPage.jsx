@@ -7,7 +7,10 @@ import { useQuests } from '../contexts/QuestContext';
 import { calculateQuestXP, calculateMissedPenalty } from '../utils/xpCalculator';
 import { diagnoseAvoidance, verifyProof, evaluateTaskSubmission, verifyCertificate } from '../services/aiService';
 import { calculateCoinsFromEvaluation, awardCoins, awardCertificateBonus } from '../services/coinService';
-import { SCORE_LABELS, CHALLENGE_CATEGORIES } from '../utils/constants';
+import { trackSecretAchievement } from '../services/badgeService';
+import { pushNotification } from '../services/notificationService';
+import { SCORE_LABELS, CHALLENGE_CATEGORIES, CERT_COINS_BY_SIGNIFICANCE, NOTIF_TYPES } from '../utils/constants';
+import { ArrowLeft } from 'lucide-react';
 import './QuestDetailPage.css';
 
 export default function QuestDetailPage() {
@@ -34,6 +37,7 @@ export default function QuestDetailPage() {
   const [certDescription, setCertDescription] = useState('');
   const [certResult, setCertResult] = useState(null);
   const [certProcessing, setCertProcessing] = useState(false);
+  const [certCoins, setCertCoins] = useState(0);
   const fileInputRef = useRef(null);
   const certInputRef = useRef(null);
 
@@ -200,13 +204,24 @@ export default function QuestDetailPage() {
         setCertResult(result);
 
         if (result.isValid && user) {
-          const { newBalance } = await awardCertificateBonus(user.uid, result.summary || certDescription, {
-            taskId: questId,
-          });
+          // AI significance (1-5) → coins (1-500)
+          const coins = CERT_COINS_BY_SIGNIFICANCE[result.significance] || 100;
+          setCertCoins(coins);
+          const { newBalance } = await awardCertificateBonus(
+            user.uid, result.summary || certDescription, { taskId: questId }, coins,
+          );
           await updateUserData({
             coins: newBalance,
             certificatesUploaded: (userData?.certificatesUploaded || 0) + 1,
           });
+          await pushNotification(user.uid, {
+            type: NOTIF_TYPES.CERT,
+            title: `📜 Certificate verified (+${coins} coins)`,
+            body: result.summary || certDescription || 'Achievement recognised by AI.',
+            icon: '🏅',
+          });
+          // Secretly track contest/hackathon grind → may award a secret badge + boosts
+          await trackSecretAchievement(user.uid, result.eventType);
         }
         setCertProcessing(false);
       };
@@ -245,7 +260,18 @@ export default function QuestDetailPage() {
     await updateUserData({
       xp: newXP,
       level: Math.floor(newXP / 1000),
+      perfectStreak: (userData?.perfectStreak || 0) + 1,
+      onTimeStreak: onTime ? (userData?.onTimeStreak || 0) + 1 : 0,
     });
+
+    if (user) {
+      await pushNotification(user.uid, {
+        type: NOTIF_TYPES.LEVEL_UP,
+        title: `✅ Quest complete: ${quest.title}`,
+        body: `+${xpBreakdown.total} XP earned.`,
+        icon: '⚔️',
+      });
+    }
 
     setXpAwarded(xpBreakdown);
     setIsProcessing(false);
@@ -304,7 +330,9 @@ export default function QuestDetailPage() {
     <div className="quest-detail" id="quest-detail-page">
       {/* Header */}
       <div className="quest-detail__header animate-fade-in-up">
-        <button className="btn btn--ghost btn--sm" onClick={() => navigate(-1)}>← Back</button>
+        <button className="quest-detail__back" onClick={() => navigate(-1)} aria-label="Back">
+          <ArrowLeft size={18} />
+        </button>
         <span className={`badge ${quest.status === 'completed' ? 'badge--success' : quest.focusLocked ? 'badge--warning' : 'badge--purple'}`}>
           {quest.status === 'completed' ? '✅ Completed' : quest.focusLocked ? '🔒 Focus Locked' : '⚔️ Active'}
         </span>
@@ -388,8 +416,8 @@ export default function QuestDetailPage() {
             </span>
             <span className="quest-detail__action-desc">
               {certResult?.isValid
-                ? `+100 coins earned!`
-                : 'Upload event certificate for bonus coins'}
+                ? `+${certCoins} coins earned!`
+                : 'Upload event certificate for AI-scored bonus coins (1–500)'}
             </span>
           </button>
 
@@ -667,7 +695,7 @@ export default function QuestDetailPage() {
                     </div>
                     <div className="quest-detail__coins-earned glass-card glass-card--no-hover">
                       <span>🪙</span>
-                      <span className="font-bold text-gradient">+100 bonus coins earned!</span>
+                      <span className="font-bold text-gradient">+{certCoins} bonus coins earned!</span>
                     </div>
                   </>
                 )}

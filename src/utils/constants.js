@@ -436,6 +436,87 @@ export const ONBOARDING_QUESTIONS = [
   },
 ];
 
+// ── Bad Badges (penalties — visible to the user) ──
+export const BAD_BADGES = {
+  the_sloth: {
+    id: 'the_sloth', name: 'The Sloth', icon: '🦥',
+    description: 'Dropped 3 or more active tasks.', bad: true,
+  },
+  the_latecomer: {
+    id: 'the_latecomer', name: 'The Latecomer', icon: '🐌',
+    description: 'Submitted tasks after the deadline 3+ times.', bad: true,
+  },
+  the_ghost: {
+    id: 'the_ghost', name: 'The Ghost', icon: '👻',
+    description: 'Abandoned a duel challenge.', bad: true,
+  },
+};
+
+// ── Antidote Badges (redeem these to cancel a bad badge) ──
+// requirement.type is checked against derived user stats; costCoins is the redemption price.
+export const ANTIDOTE_BADGES = {
+  sloth_basher: {
+    id: 'sloth_basher', name: 'Sloth Basher', icon: '⚡',
+    description: 'Crush The Sloth. Hold a 5-task perfect streak, then redeem to wipe it clean.',
+    cancels: 'the_sloth', requirement: { type: 'perfectStreak', value: 5 },
+    costCoins: 150, color: '#22c55e',
+  },
+  punctuality_paragon: {
+    id: 'punctuality_paragon', name: 'Punctuality Paragon', icon: '⏱️',
+    description: 'Erase The Latecomer. Complete 5 tasks on time, then redeem.',
+    cancels: 'the_latecomer', requirement: { type: 'onTimeStreak', value: 5 },
+    costCoins: 150, color: '#22d3ee',
+  },
+  redemption_runner: {
+    id: 'redemption_runner', name: 'Redemption Runner', icon: '🔥',
+    description: 'Banish The Ghost. Win a duel, then redeem to clear your record.',
+    cancels: 'the_ghost', requirement: { type: 'duelWins', value: 1 },
+    costCoins: 200, color: '#ec4899',
+  },
+};
+
+// ── Secret Badges (AI-awarded silently for off-platform achievements) ──
+export const SECRET_BADGES = {
+  contest_crusher: {
+    id: 'contest_crusher', name: 'Contest Crusher', icon: '🏆',
+    description: 'Quietly tracked: a serial competitor across multiple contests.',
+    threshold: 2, hpBoost: 200, coinBoost: 100, secret: true,
+  },
+  hackathon_phantom: {
+    id: 'hackathon_phantom', name: 'Hackathon Phantom', icon: '👾',
+    description: 'Quietly tracked: a relentless hackathon participant.',
+    threshold: 2, hpBoost: 300, coinBoost: 150, secret: true,
+  },
+  certified_legend: {
+    id: 'certified_legend', name: 'Certified Legend', icon: '📜',
+    description: 'Quietly tracked: a collector of verified achievements.',
+    threshold: 3, hpBoost: 250, coinBoost: 125, secret: true,
+  },
+};
+
+// Coins awarded for a verified certificate, scaled by AI significance (1-5). Range 1-500.
+export const CERT_COINS_BY_SIGNIFICANCE = { 1: 50, 2: 150, 3: 300, 4: 400, 5: 500 };
+
+// ── Accent Theme Palette (Settings → theme picker) ──
+export const ACCENT_THEMES = [
+  { id: 'cyan', name: 'Plasma Cyan', color: '#22d3ee', glow: 'rgba(34,211,238,0.40)', soft: 'rgba(34,211,238,0.15)' },
+  { id: 'violet', name: 'Void Violet', color: '#a855f7', glow: 'rgba(168,85,247,0.40)', soft: 'rgba(168,85,247,0.15)' },
+  { id: 'magenta', name: 'Neon Magenta', color: '#ec4899', glow: 'rgba(236,72,153,0.40)', soft: 'rgba(236,72,153,0.15)' },
+  { id: 'gold', name: 'Champion Gold', color: '#fbbf24', glow: 'rgba(251,191,36,0.40)', soft: 'rgba(251,191,36,0.15)' },
+  { id: 'emerald', name: 'Matrix Emerald', color: '#22c55e', glow: 'rgba(34,197,94,0.40)', soft: 'rgba(34,197,94,0.15)' },
+];
+
+// ── Notification types ──
+export const NOTIF_TYPES = {
+  DUEL_CHALLENGE: 'duel_challenge',
+  DUEL_RESULT: 'duel_result',
+  BADGE: 'badge',
+  COINS: 'coins',
+  LEVEL_UP: 'level_up',
+  CERT: 'cert',
+  PENALTY: 'penalty',
+};
+
 // ── Navigation Items ──
 export const NAV_ITEMS = [
   { path: '/dashboard', label: 'Quests', icon: '⚔️' },

@@ -259,9 +259,7 @@ export default function GoalIntakePage() {
                   >
                     ×
                   </button>
-                  <span className="goal-intake__mission-icon">
-                    {mission.isBossBattle ? '🐉' : '🗺️'}
-                  </span>
+                  <span className="goal-intake__mission-icon">🗺️</span>
                   <div style={{ flex: 1, marginRight: '2rem' }}>
                     <input 
                       className="form-input text-bold h5 mb-xs" 
@@ -277,14 +275,6 @@ export default function GoalIntakePage() {
                       onChange={(e) => updateMission(mIdx, 'description', e.target.value)}
                       placeholder="Quest Phase Description"
                     />
-                    <label className="text-xs text-danger mt-xs flex align-center" style={{ gap: '0.25rem', cursor: 'pointer' }}>
-                      <input 
-                        type="checkbox" 
-                        checked={mission.isBossBattle || false} 
-                        onChange={(e) => updateMission(mIdx, 'isBossBattle', e.target.checked)} 
-                      />
-                      Is Boss Battle?
-                    </label>
                   </div>
                 </div>
 

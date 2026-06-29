@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { createDuel, joinDuel, declineDuel, submitChallengeResult, getUserDuels, dropDuelChallenge } from '../services/duelService';
-import { suggestDuelChallenges, refineChallengePrompt, evaluateTaskSubmission, generateDuelMissionTree } from '../services/aiService';
+import { suggestDuelChallenges, refineChallengePrompt, evaluateTaskSubmission, generateDuelMissionTree, decidePenalty } from '../services/aiService';
 import { awardDuelCoins, calculateCoinsFromEvaluation, awardCoins } from '../services/coinService';
-import { CHALLENGE_CATEGORIES, DUEL_TYPES, SCORE_LABELS } from '../utils/constants';
+import { pushNotification } from '../services/notificationService';
+import { CHALLENGE_CATEGORIES, DUEL_TYPES, SCORE_LABELS, NOTIF_TYPES } from '../utils/constants';
+import { Swords, Trophy, Plus, Clock, Skull } from 'lucide-react';
 import './DuelPage.css';
 
 export default function DuelPage() {
@@ -11,11 +13,9 @@ export default function DuelPage() {
   const [duels, setDuels] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showCreate, setShowCreate] = useState(false);
-  const [duelTheme, setDuelTheme] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('coding');
-  const [aiSuggestions, setAiSuggestions] = useState(null);
   const [processing, setProcessing] = useState(null);
   const [activeDuelView, setActiveDuelView] = useState(null);
+  const [resultsId, setResultsId] = useState(null);
 
   const loadDuels = async () => {
     if (!user) return;
@@ -34,7 +34,16 @@ export default function DuelPage() {
   const handleAccept = async (duelId) => {
     setProcessing(duelId);
     try {
+      const duel = duels.find((d) => d.id === duelId);
       await joinDuel(duelId, user.uid, userData?.displayName, user.photoURL, user.email);
+      if (duel?.creatorId && duel.creatorId !== user.uid) {
+        await pushNotification(duel.creatorId, {
+          type: NOTIF_TYPES.DUEL_CHALLENGE,
+          title: `⚔️ ${userData?.displayName || 'A challenger'} accepted your duel`,
+          body: duel.challenges?.[0]?.title || 'Your duel is now live.',
+          icon: '⚔️',
+        });
+      }
       await loadDuels();
     } catch (err) { console.error(err); }
     setProcessing(null);
@@ -60,6 +69,13 @@ export default function DuelPage() {
   );
   const completedDuels = duels.filter(d => d.status === 'completed' || d.status === 'declined');
 
+  // Win/Loss record for the arena stat row
+  const settled = completedDuels.filter(d => d.status === 'completed' && d.winnerId);
+  const wins = settled.filter(d => d.winnerId === user?.uid).length;
+  const losses = settled.filter(d => d.winnerId !== user?.uid).length;
+  let winStreak = 0;
+  for (const d of settled) { if (d.winnerId === user?.uid) winStreak++; else break; }
+
   if (loading) {
     return (
       <div className="loading-screen">
@@ -71,14 +87,31 @@ export default function DuelPage() {
 
   return (
     <div className="duel-page" id="duel-page">
-      <div className="duel-page__header animate-fade-in-up">
-        <div>
-          <h2 className="h3">🤺 <span className="text-gradient">Duels Arena</span></h2>
-          <p className="text-sm text-muted">Challenge friends. Compete. Earn coins & XP.</p>
+      <div className="duel-arena__top">
+        <p className="hud-eyebrow">PvP Arena</p>
+        <div className="duel-arena__title-row">
+          <h1 className="screen-title">Duels <span className="text-gradient-xp">Arena</span></h1>
+          <button className="duel-arena__challenge glow-cyan" onClick={() => setShowCreate(true)}>
+            <Plus size={16} /> Challenge
+          </button>
         </div>
-        <button className="btn btn--primary btn--sm" onClick={() => setShowCreate(true)}>
-          + Challenge
-        </button>
+        <p className="screen-sub">Challenge friends. Compete. Earn coins &amp; XP.</p>
+      </div>
+
+      {/* Record */}
+      <div className="duel-arena__stats">
+        <div className="hud-panel arena-stat">
+          <div className="arena-stat__value text-success">{wins}</div>
+          <div className="arena-stat__label">Wins</div>
+        </div>
+        <div className="hud-panel arena-stat">
+          <div className="arena-stat__value text-danger">{losses}</div>
+          <div className="arena-stat__label">Losses</div>
+        </div>
+        <div className="hud-panel arena-stat">
+          <div className="arena-stat__value text-gold">{winStreak}W</div>
+          <div className="arena-stat__label">Streak</div>
+        </div>
       </div>
 
       {/* Incoming Challenges */}
@@ -150,7 +183,7 @@ export default function DuelPage() {
       {activeDuels.length > 0 && (
         <div className="duel-page__section animate-fade-in-up delay-2">
           <h3 className="duel-page__section-title">
-            <span>⚔️</span> Active Duels
+            <Swords size={16} className="text-accent" /> Live Duels
             <span className="duel-page__badge">{activeDuels.length}</span>
           </h3>
           {activeDuels.map(duel => (
@@ -163,6 +196,7 @@ export default function DuelPage() {
               onReload={loadDuels}
               expanded={activeDuelView === duel.id}
               onToggle={() => setActiveDuelView(v => v === duel.id ? null : duel.id)}
+              onShowResults={() => setResultsId(duel.id)}
             />
           ))}
         </div>
@@ -196,7 +230,7 @@ export default function DuelPage() {
       {completedDuels.length > 0 && (
         <div className="duel-page__section animate-fade-in-up delay-4">
           <h3 className="duel-page__section-title">
-            <span>🏆</span> Past Duels
+            <Trophy size={16} className="text-gold" /> Past Duels
           </h3>
           {completedDuels.map(duel => {
             const won = duel.winnerId === user.uid;
@@ -213,14 +247,28 @@ export default function DuelPage() {
                   )}
                 </div>
                 {duel.status === 'completed' && (
-                  <p className="text-xs text-muted">
-                    Winner: {duel.winnerName} • +{duel.totalHP || duel.xpReward} HP
-                  </p>
+                  <>
+                    <p className="text-xs text-muted">
+                      Winner: {duel.winnerName} • +{duel.totalHP || duel.xpReward} HP
+                    </p>
+                    <button className="btn btn--secondary btn--sm mt-sm" onClick={() => setResultsId(duel.id)}>
+                      📊 View Scorecard
+                    </button>
+                  </>
                 )}
               </div>
             );
           })}
         </div>
+      )}
+
+      {/* Duel scorecard table */}
+      {resultsId && (
+        <DuelResultsModal
+          duel={duels.find(d => d.id === resultsId)}
+          currentUserId={user?.uid}
+          onClose={() => setResultsId(null)}
+        />
       )}
 
       {/* Empty State */}
@@ -262,6 +310,7 @@ function CreateDuelWizard({ user, userData, onClose, onCreated }) {
   const [emails, setEmails] = useState(['']);
 
   // Step 2: Mode
+  const [duelTheme, setDuelTheme] = useState('');
   const [duelType, setDuelType] = useState('custom');
   const [selectedCategory, setSelectedCategory] = useState('custom');
 
@@ -708,13 +757,14 @@ function CreateDuelWizard({ user, userData, onClose, onCreated }) {
    ACTIVE DUEL CARD — Multi-player arena with per-challenge tracking
    ══════════════════════════════════════════════════════ */
 
-function ActiveDuelCard({ duel, user, userData, updateUserData, onReload, expanded, onToggle }) {
+function ActiveDuelCard({ duel, user, userData, updateUserData, onReload, expanded, onToggle, onShowResults }) {
   const [submitChallenge, setSubmitChallenge] = useState(null);
   const [proofFile, setProofFile] = useState(null);
   const [proofPreview, setProofPreview] = useState(null);
   const [submissionText, setSubmissionText] = useState('');
   const [evaluating, setEvaluating] = useState(false);
   const [evalResult, setEvalResult] = useState(null);
+  const [completedNow, setCompletedNow] = useState(false);
 
   const isMultiPlayer = duel.participants && duel.participants.length > 0;
   const participants = duel.participants || [];
@@ -723,9 +773,39 @@ function ActiveDuelCard({ duel, user, userData, updateUserData, onReload, expand
   const myCompleted = myParticipant?.completedChallenges || {};
 
   const handleDrop = async (challenge) => {
-    if (!window.confirm(`Are you sure you want to drop "${challenge.title}"? You will lose 10 HP and it will count towards your dropped tasks record!`)) return;
+    // Let the AI decide a fair penalty from task complexity + the user's track record.
+    let penalty;
     try {
-      await dropDuelChallenge(duel.id, user.uid, challenge.id);
+      penalty = await decidePenalty({
+        action: 'drop',
+        taskTitle: challenge.title,
+        difficulty: challenge.difficulty,
+        stakeHP: challenge.hp,
+        userStats: {
+          tasksDropped: userData?.tasksDropped || 0,
+          perfectStreak: userData?.perfectStreak || 0,
+          onTimeStreak: userData?.onTimeStreak || 0,
+          level: Math.floor((userData?.xp || 0) / 1000),
+        },
+      });
+    } catch {
+      penalty = { hpLoss: 10, coinLoss: 0, reason: 'Standard drop penalty applied.' };
+    }
+    if (!window.confirm(`Drop "${challenge.title}"?\n\n🤖 AI penalty: -${penalty.hpLoss} HP, -${penalty.coinLoss} coins.\n${penalty.reason}`)) return;
+    try {
+      await dropDuelChallenge(duel.id, user.uid, challenge.id, penalty);
+      const newXP = Math.max(0, (userData?.xp || 0) - penalty.hpLoss);
+      await updateUserData({
+        xp: newXP,
+        level: Math.floor(newXP / 1000),
+        coins: Math.max(0, (userData?.coins || 0) - penalty.coinLoss),
+      });
+      await pushNotification(user.uid, {
+        type: NOTIF_TYPES.PENALTY,
+        title: `⚠️ Dropped: ${challenge.title}`,
+        body: `${penalty.reason} (-${penalty.hpLoss} HP, -${penalty.coinLoss} coins)`,
+        icon: '⚠️',
+      });
       if (onReload) onReload();
     } catch (err) {
       console.error('Failed to drop challenge:', err);
@@ -789,17 +869,34 @@ function ActiveDuelCard({ duel, user, userData, updateUserData, onReload, expand
         }
       }
 
-      const result = await submitChallengeResult(duel.id, user.uid, challenge.id, score, aiEvaluation);
+      const result = await submitChallengeResult(
+        duel.id, user.uid, challenge.id, score, aiEvaluation,
+        { text: submissionText, type: proofFile ? 'file' : 'text' },
+      );
       setEvalResult({ ...aiEvaluation, score, challengeTitle: challenge.title });
 
       // Check if duel completed and award duel bonuses
       if (result.winnerId) {
+        setCompletedNow(true);
         const isWinner = result.winnerId === user.uid;
         await awardDuelCoins(user.uid, duel.id, isWinner);
-        // Award XP
+        // Award XP + track duel wins (used by the Redemption Arc antidote)
         const bonusXP = isWinner ? duel.totalHP || 200 : Math.round((duel.totalHP || 200) * 0.3);
         const newXP = (userData?.xp || 0) + bonusXP;
-        await updateUserData({ xp: newXP, level: Math.floor(newXP / 1000) });
+        await updateUserData({
+          xp: newXP,
+          level: Math.floor(newXP / 1000),
+          duelWins: (userData?.duelWins || 0) + (isWinner ? 1 : 0),
+        });
+        // Notify every participant of the result
+        for (const p of (duel.participants || [])) {
+          await pushNotification(p.id, {
+            type: NOTIF_TYPES.DUEL_RESULT,
+            title: p.id === result.winnerId ? '🏆 You won a duel!' : '⚔️ Duel finished',
+            body: `"${challenges[0]?.title || 'Duel'}" — winner: ${result.winnerName}`,
+            icon: p.id === result.winnerId ? '🏆' : '⚔️',
+          });
+        }
       }
 
       await onReload();
@@ -824,7 +921,16 @@ function ActiveDuelCard({ duel, user, userData, updateUserData, onReload, expand
             <span className="text-xs text-muted">{participants.length} players</span>
           </div>
         </div>
-        <span className={`mission-card__chevron ${expanded ? 'mission-card__chevron--open' : ''}`}>▼</span>
+        <div className="duel-card__arena-actions">
+          <button
+            className="duel-card__scorecard-btn"
+            onClick={(e) => { e.stopPropagation(); onShowResults && onShowResults(); }}
+            title="View scorecard"
+          >
+            📊
+          </button>
+          <span className={`mission-card__chevron ${expanded ? 'mission-card__chevron--open' : ''}`}>▼</span>
+        </div>
       </div>
 
       {/* Participants Row */}
@@ -880,7 +986,7 @@ function ActiveDuelCard({ duel, user, userData, updateUserData, onReload, expand
                     <button
                       className="btn btn--danger btn--sm"
                       onClick={() => handleDrop(ch)}
-                      title="Drop challenge (Penalty: -10 HP)"
+                      title="Drop challenge (AI-decided penalty)"
                     >
                       Drop
                     </button>
@@ -892,6 +998,37 @@ function ActiveDuelCard({ duel, user, userData, updateUserData, onReload, expand
                     </button>
                   </div>
                 )}
+
+                {/* Transparency: everyone's score + submission for this challenge */}
+                {(() => {
+                  const board = participants
+                    .map((p) => ({ p, r: p.completedChallenges?.[ch.id] }))
+                    .filter((x) => x.r);
+                  if (board.length === 0) return null;
+                  return (
+                    <div className="duel-scoreboard">
+                      {board.map(({ p, r }) => (
+                        <div key={p.id} className="duel-scoreboard__row">
+                          <span className="duel-scoreboard__name">
+                            {p.id === user.uid ? 'You' : (p.name?.split(' ')[0] || 'Player')}
+                          </span>
+                          <span className={`duel-scoreboard__score ${r.dropped ? 'text-danger' : 'text-success'}`}>
+                            {r.dropped ? 'Dropped' : `${r.score}/5`}
+                          </span>
+                          {r.aiEvaluation?.feedback && (
+                            <span className="duel-scoreboard__fb">💬 {r.aiEvaluation.feedback}</span>
+                          )}
+                          {r.submission?.text && (
+                            <span className="duel-scoreboard__sub">📝 “{r.submission.text}”</span>
+                          )}
+                          {r.submission?.type === 'file' && !r.submission?.text && (
+                            <span className="duel-scoreboard__sub">📎 File submitted</span>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  );
+                })()}
               </div>
             );
           })}
@@ -1021,8 +1158,9 @@ function ActiveDuelCard({ duel, user, userData, updateUserData, onReload, expand
                 setProofFile(null);
                 setProofPreview(null);
                 setSubmissionText('');
+                if (completedNow) { setCompletedNow(false); onShowResults && onShowResults(); }
               }}>
-                Done
+                {completedNow ? '📊 View Results' : 'Done'}
               </button>
             </div>
           </div>
@@ -1041,4 +1179,83 @@ function formatDeadline(deadline) {
   if (diff < 3600000) return `${Math.ceil(diff / 60000)}m left`;
   if (diff < 86400000) return `${Math.ceil(diff / 3600000)}h left`;
   return `${Math.ceil(diff / 86400000)}d left`;
+}
+
+
+/* ══════════════════════════════════════════════════════
+   DUEL SCORECARD — Player × Task table with submissions
+   ══════════════════════════════════════════════════════ */
+
+function DuelResultsModal({ duel, currentUserId, onClose }) {
+  if (!duel) return null;
+  const challenges = duel.challenges || [];
+  const participants = duel.participants || [];
+
+  const totals = participants
+    .map((p) => ({
+      ...p,
+      isMe: p.id === currentUserId,
+      total: Object.values(p.completedChallenges || {}).reduce((s, c) => s + (c.score || 0), 0),
+    }))
+    .sort((a, b) => b.total - a.total);
+
+  const renderSubmission = (r) => {
+    if (!r) return <span className="text-tertiary">—</span>;
+    if (r.dropped) return <span className="text-danger">Dropped</span>;
+    if (r.submission?.text) return <span className="duel-results__quote">“{r.submission.text}”</span>;
+    if (r.submission?.type === 'file') return <span>📎 File submitted</span>;
+    return <span>Submitted</span>;
+  };
+
+  return (
+    <>
+      <div className="modal-backdrop" onClick={onClose} />
+      <div className="modal duel-results">
+        <div className="modal__handle" />
+        <div className="flex items-center justify-between mb-sm">
+          <h3 className="h4">📊 Scorecard</h3>
+          <button className="duel-results__close" onClick={onClose} aria-label="Close">✕</button>
+        </div>
+
+        {duel.status === 'completed' && duel.winnerName && (
+          <p className="duel-results__winner">🏆 Winner: <strong>{duel.winnerName}</strong></p>
+        )}
+
+        {/* Standings */}
+        <div className="duel-results__standings">
+          {totals.map((p, i) => (
+            <div key={p.id} className={`duel-results__stand ${p.id === duel.winnerId ? 'duel-results__stand--win' : ''}`}>
+              <span className="duel-results__rank">#{i + 1}</span>
+              <span className="duel-results__pname">{p.isMe ? 'You' : (p.name?.split(' ')[0] || 'Player')}</span>
+              <span className="duel-results__ptotal">{p.total} pts</span>
+            </div>
+          ))}
+        </div>
+
+        {/* Table */}
+        <div className="duel-results__table-wrap">
+          <table className="duel-results__table">
+            <thead>
+              <tr><th>Player</th><th>Task</th><th>Submission</th><th>Score</th></tr>
+            </thead>
+            <tbody>
+              {participants.map((p) => challenges.map((ch) => {
+                const r = p.completedChallenges?.[ch.id];
+                return (
+                  <tr key={p.id + ch.id} className={p.id === currentUserId ? 'duel-results__me' : ''}>
+                    <td>{p.id === currentUserId ? 'You' : (p.name?.split(' ')[0] || 'Player')}</td>
+                    <td>{ch.title}</td>
+                    <td className="duel-results__sub">{renderSubmission(r)}</td>
+                    <td className="duel-results__score">{!r ? '—' : r.dropped ? '0' : `${r.score}/5`}</td>
+                  </tr>
+                );
+              }))}
+            </tbody>
+          </table>
+        </div>
+
+        <button className="btn btn--primary btn--full mt-base" onClick={onClose}>Close</button>
+      </div>
+    </>
+  );
 }

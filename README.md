@@ -1,114 +1,137 @@
-# ⚔️ LifeQuest AI — A Game Engine for Real-Life Goals
+# ⚡ LifeQuest AI — A Game Engine for Real-Life Goals
 
-> **Live Production Build:** [https://lifequest-ai-adfe7.web.app](https://lifequest-ai-adfe7.web.app)
+> Stop escaping into games to feel achievement. **Start achieving in reality.**
 
-LifeQuest AI is a gamified productivity application designed to solve a fundamental problem: traditional to-do lists are boring, unmotivating, and fail to address *why* we procrastinate. 
+LifeQuest AI is an AI-powered productivity companion that turns your real-life goals into a role-playing game — complete with **missions, quests, XP, ranks, coins, duels, and boss-grade deadlines**. At its core is **Google Gemini**, acting as an autonomous engine that *decomposes* your goals, *evaluates* your work, *decides* fair penalties, *plans* your day, and even *awards hidden achievements* for the grind it quietly notices.
 
-Instead of just listing tasks, LifeQuest AI acts as a **Game Engine for your life**. It uses Artificial Intelligence to decompose massive, overwhelming goals into structured "Missions", and breaks those down into actionable, bite-sized "Quests". It diagnoses your unique productivity archetype and tailors the experience to help you overcome your specific hurdles.
+Built for the **Vibe2Ship Hackathon** — Problem Statement: *The Last-Minute Life Saver*.
 
----
-
-## 🎯 1. What We Built (Feature Set)
-
-We built a comprehensive, mobile-first web application featuring a blend of AI generation, real-time gamification, and social accountability.
-
-### Core Gamification Engine
-*   **XP & Leveling System:** Earn XP for completing quests. Level up from "Initiate" to "Legend".
-*   **Rank Titles & Badges:** Unlock achievements (e.g., "Boss Slayer", "Undefeated", "Summer Grinder 2026") based on specific behaviors.
-*   **Dynamic XP Modifiers:** Earn bonuses for early completion (+75%), maintaining streaks (+10%), or successfully utilizing "Focus Lock" (+50%).
-
-### AI-Powered Features (Powered by Google Gemini)
-*   **Archetype Diagnosis:** An onboarding questionnaire analyzes the user's psychology to determine their productivity archetype (e.g., Procrastinator, Perfectionist, Overloaded) and tailors AI responses accordingly.
-*   **Goal Decomposition:** Users speak or type a massive goal. The AI automatically breaks it down into major milestones (Missions) and actionable steps (Quests), complete with difficulty ratings and time estimates.
-*   **Anti-Avoidance System:** If a user opens a quest 3 times without completing it, the AI intercepts. It diagnoses *why* they are avoiding it based on their archetype and offers to restructure the quest into something less intimidating.
-*   **AI Proof Verification:** Users upload photos or documents as proof of completion. Gemini's multimodal capabilities analyze the proof, verify it matches the quest, scores the quality (1-5), and awards bonus XP.
-*   **Boss Battles:** Final deadlines are treated as "Boss Battles." The AI generates specific "prep quests" to ensure the user is ready for the final push.
-
-### Social & Competitive Mechanics
-*   **Duel System:** Challenge a friend to a specific quest via email. Both players receive the quest; the first to finish (or the one with higher AI-verified quality) wins the duel and earns massive bonus XP.
-*   **Global Leaderboard:** A real-time ranking of the top adventurers based on total XP.
+🔗 **Live App:** https://lifequest-ai-adfe7.web.app
+📦 **Repository:** https://github.com/ami4go/LifeQuest
 
 ---
 
-## 🏗️ 2. How We Built It (Technical Architecture)
+## 🎯 The Problem
 
-### Tech Stack
-*   **Frontend Framework:** React 18 + Vite (Fast HMR, optimized builds).
-*   **Styling:** Vanilla CSS with custom properties (CSS variables) for a robust, flexible design system (Dark mode, glassmorphism, dynamic gradients).
-*   **Routing:** React Router v6 for protected routes and smooth SPA navigation.
-*   **Backend & Database:** Firebase (Authentication, Firestore Database, Hosting).
-*   **AI Integration:** `@google/genai` SDK using `gemini-2.5-flash` for fast, cost-effective multimodal generation.
+Students, professionals, and entrepreneurs constantly miss deadlines, assignments, and commitments. Traditional productivity tools rely on **passive reminders that are easy to ignore** and do nothing to help people actually *start* and *finish* the work.
 
-### Architecture & Data Flow
-1.  **State Management:** We utilized React Context (`AuthContext`, `QuestContext`) to manage global state. `QuestContext` handles real-time Firestore subscriptions, ensuring the UI updates instantly across all devices when a quest is modified.
-2.  **Firestore Schema:**
-    *   `users`: Stores profile data, XP, level, archetype, and streak info.
-    *   `missions`: Groups of quests belonging to a specific goal.
-    *   `quests`: Individual actionable items, linked to missions.
-    *   `duels`: Tracks challenger vs. opponent state, deadlines, and winners.
-3.  **AI Service Layer (`src/services/aiService.js`):** We abstracted all Gemini API calls into a dedicated service. This service utilizes structured prompts enforcing strict JSON responses, ensuring the AI outputs predictable data structures that the React UI can safely parse and render.
-4.  **PWA Configuration:** We implemented a `manifest.json` and meta tags to allow the app to be installed as a Progressive Web App on mobile devices, providing a native-like full-screen experience.
+LifeQuest AI moves beyond reminders. It uses AI to **proactively plan, prioritize, motivate, and verify** — converting the dread of a deadline into the dopamine of a quest.
 
 ---
 
-## 🧠 3. Why We Built It This Way (In-Depth Analysis)
+## ✨ Key Features
 
-### The Problem with Traditional Productivity Tools
-Most task managers assume humans operate like machines: input task, execute task. They ignore human psychology. When a user writes "Launch Startup" on a to-do list, they experience cognitive overload. The brain doesn't know where to start, leading to avoidance and procrastination.
+### 🧠 Agentic AI (powered by Gemini)
+- **AI Goal Decomposition** — Type or *speak* a goal + deadline; Gemini breaks it into a structured **mission tree** of bite-sized quests, each with a difficulty rating and time estimate, calibrated to your psychology.
+- **Archetype Engine** — An 8-question onboarding diagnoses your procrastination archetype (Procrastinator, Perfectionist, Time Optimist, Overloaded, Low Motivation). The AI then tailors every quest and tip to *your* failure mode.
+- **AI Daily Planner** — A one-tap agent that prioritizes your day to beat the closest deadlines, with archetype-aware tips and energy advice.
+- **AI Proof Verification** — Upload your work (image/PDF/text); Gemini's **multimodal** evaluator scores it **1–5** with specific strengths and improvements, then awards XP + coins.
+- **Anti-Avoidance System** — Open a quest too many times without finishing? The AI diagnoses *why* you're avoiding it and **restructures it** into an easier first step.
+- **AI-Decided Penalties** — Drop a task and Gemini weighs the task's complexity *and your personal track record* to set a **fair** HP/coin loss — not a blunt flat fee.
+- **Certificate AI Scoring** — Upload a certificate/achievement; the AI verifies it and awards **1–500 coins** scaled by significance.
+- **Secret Achievement Agent** — Upload contest/hackathon proofs and the AI **silently tracks your grind**, unlocking hidden badges + HP/coin boosts when you hit thresholds.
 
-### Our Solution: The Gamification & AI Synthesis
-We designed LifeQuest AI to directly counter cognitive overload and lack of motivation.
+### 🎮 Gamification & Engagement
+- **Quests Dashboard** — Three smart sections: **Priority** (top 5 by deadline + points), **All Quests** (with a show-N selector), and **Completed** — all auto-sorted. A live HUD shows XP, level, rank, and coins.
+- **Focus Lock** — Bet on yourself: **+50% XP** if you deliver on time, **−25%** if you miss. Real stakes, real motivation.
+- **Duels Arena** — Challenge friends to custom or **AI-generated** challenges. Gemini evaluates each submission; a full **scorecard table** (Player × Task × Submission × Score) shows everyone's results, and the winner is decided instantly the moment everyone finishes.
+- **Coins Economy & Rewards** — Earn coins from AI-evaluated work; track **Total Earned · Spent · Remaining**; redeem merch; browse full transaction history.
+- **Badges System** — **Unlocked**, **Locked** (good *and* penalty badges), plus the **"Redemption Arc"**: earn *antidote* badges (e.g. **Sloth Basher**) to cancel out penalty badges (e.g. **The Sloth**).
+- **Global Leaderboard** — Podium + ladder, ranked by XP across all operators.
+- **Live Notifications** — A real-time activity feed for duel challenges, badges earned, coins, and level-ups.
 
-1.  **Why AI Decomposition?** 
-    By automatically breaking "Launch Startup" into "Mission 1: Market Research" → "Quest 1: Register domain name", we lower the activation energy required to start. 
-2.  **Why Archetypes?** 
-    Productivity isn't one-size-fits-all. A *Perfectionist* needs permission to write a messy first draft (which the AI will suggest). A *Procrastinator* needs a 5-minute micro-task to build momentum. The AI tailors its advice based on this psychological profile.
-3.  **Why "Focus Lock"?** 
-    Behavioral economics shows that humans are loss-averse. "Focus Lock" allows users to manufacture stakes. By locking a quest, they risk losing XP if they fail, which triggers loss aversion and forces action.
-4.  **Why AI Proof Verification?** 
-    Gamification often fails because users can simply click "Done" without doing the work. By requiring photographic/document proof and having an AI judge it, we introduce a "Proof of Work" mechanism that prevents cheating and encourages higher quality output.
-5.  **Why Duels?** 
-    Social accountability is one of the strongest human motivators. Competing against a friend turns a mundane chore into a race.
-
-### Technical Decisions
-*   **Why Firebase?** We needed real-time capabilities for the Gamification (XP updates, Leaderboard changes) and Duels. Firestore's websocket-based subscriptions made this seamless.
-*   **Why Vanilla CSS instead of Tailwind?** We wanted absolute control over complex micro-animations, glassmorphism effects, and dynamic theming to achieve a highly specific "premium gaming" aesthetic that would wow users instantly.
-*   **Why Gemini Flash?** The anti-avoidance and goal decomposition features require near-instant responses to maintain the illusion of a responsive "Game Engine." The Flash model provided the perfect balance of speed, multimodal capability (for proof verification), and cost-effectiveness.
-
----
-
-## 📈 4. Task Tracking & Implementation History
-
-We executed this project in intense phases, going from concept to production in under 48 hours.
-
-### ✅ Phase 1: Foundation
-*   Initialized Vite + React, configured Firebase & Gemini.
-*   Built the Design System (`index.css`) establishing the glassmorphic aesthetic.
-*   Implemented Google Auth and protected routing.
-
-### ✅ Phase 2: Onboarding & Psychology
-*   Built the 8-question psychological assessment.
-*   Created the scoring engine to determine user Archetypes.
-
-### ✅ Phase 3: AI Engine Integration
-*   Built the Goal Intake page with voice recognition (Web Speech API).
-*   Engineered the structured JSON prompts for `decomposeGoal`.
-*   Mapped AI outputs to Firestore `missions` and `quests` collections.
-
-### ✅ Phase 4: Core Gameplay Loop
-*   Built the Dashboard and nested Mission-centric UI.
-*   Implemented XP math, Level calculations, and Rank titles.
-*   Created the "Focus Lock" high-stakes mechanism.
-*   Engineered the Multimodal AI Proof Verification system.
-
-### ✅ Phase 5: Advanced Features & Polish
-*   Implemented the Anti-Avoidance detection and AI restructuring modal.
-*   Built the Duel System (Firestore schema + UI for challenging friends).
-*   Created the Boss Battle page and AI prep-quest generator.
-*   Built the Global Leaderboard.
-*   Configured PWA manifest for mobile installability.
-*   Resolved Firebase caching issues for production deployment.
+### 🎨 Experience
+- **Mobile-first, console-grade UI** — A cohesive cyber/HUD design system with a bottom tab bar + center action button.
+- **Accent themes** — Pick your signature accent color; edit your profile in Settings.
+- **Voice input** — Dictate goals with the Web Speech API.
 
 ---
 
-**Built with ❤️ and 🤖 for the Vibe2Ship Hackathon.**
+## 🛠️ Tech Stack
+
+| Layer | Technology |
+|---|---|
+| **AI** | **Google Gemini** (`gemini-2.5-flash`) via the `@google/genai` SDK — multimodal text + image |
+| **Auth** | **Firebase Authentication** (Google Sign-In) |
+| **Database** | **Cloud Firestore** (real-time listeners) |
+| **Hosting** | **Firebase Hosting** |
+| **Frontend** | React 19, Vite 8, React Router 7 |
+| **UI** | Custom CSS design system, `lucide-react` icons |
+
+### 🟦 Google Technologies Used
+- **Google Gemini API** — the agentic brain behind decomposition, evaluation, planning, penalties, and certificate scoring (text **and** vision).
+- **Firebase (Google Cloud)** — Authentication, Firestore, and Hosting.
+- **Google Sign-In (OAuth 2.0)** — one-tap account creation.
+- **Google AI Studio** — used to design, test, and refine the Gemini prompts that power each agent.
+
+---
+
+## 🧩 Architecture
+
+```
+src/
+├── config/          # Firebase + Gemini client setup
+├── contexts/        # AuthContext, QuestContext, NotificationContext, ThemeContext
+├── services/        # aiService (Gemini), duelService, coinService, badgeService, notificationService
+├── utils/           # levelSystem, xpCalculator, archetypeEngine, constants
+├── components/      # MobileShell (top HUD + tab bar + side menu + notifications)
+└── pages/           # Landing, Onboarding, GoalIntake, Dashboard, QuestDetail,
+                     # Duels, Leaderboard, Rewards, Badges, Profile, Settings, Schedule
+```
+
+- **`aiService.js`** centralizes every Gemini call: `decomposeGoal`, `evaluateTaskSubmission`, `diagnoseAvoidance`, `generateSchedule`, `decidePenalty`, `verifyCertificate`, `suggestDuelChallenges`, and more — each returning structured JSON with graceful fallbacks.
+- **Real-time everywhere** — the user profile and quest/duel data stream from Firestore via `onSnapshot`, so XP, coins, and badges update instantly across the app.
+
+---
+
+## 🚀 Run It Locally
+
+### Prerequisites
+- Node.js 18+
+- A Firebase project (Auth + Firestore enabled)
+- A Google Gemini API key ([Google AI Studio](https://aistudio.google.com/))
+
+### 1. Install
+```bash
+npm install
+```
+
+### 2. Configure environment
+Create a `.env` file in the project root:
+```env
+VITE_GEMINI_API_KEY=your_gemini_api_key
+VITE_FIREBASE_API_KEY=your_firebase_api_key
+VITE_FIREBASE_AUTH_DOMAIN=your_project.firebaseapp.com
+VITE_FIREBASE_PROJECT_ID=your_project_id
+VITE_FIREBASE_STORAGE_BUCKET=your_project.appspot.com
+VITE_FIREBASE_MESSAGING_SENDER_ID=your_sender_id
+VITE_FIREBASE_APP_ID=your_app_id
+```
+
+### 3. Develop
+```bash
+npm run dev
+```
+
+### 4. Build & Deploy
+```bash
+npm run build
+firebase deploy --only hosting
+```
+
+---
+
+## 🏆 How It Maps to the Evaluation Criteria
+
+| Criterion | How LifeQuest AI delivers |
+|---|---|
+| **Agentic Depth** | Gemini autonomously decomposes goals, evaluates work, decides penalties, plans days, and awards hidden badges — each a real decision, not a static response. |
+| **Problem Solving & Impact** | Directly attacks deadline-missing by making *starting* and *finishing* rewarding; the AI planner + anti-avoidance push users to action. |
+| **Innovation & Creativity** | Archetype-driven personalization, Focus-Lock stakes, AI-judged duels, and the badge "Redemption Arc" are novel takes on productivity. |
+| **Use of Google Technologies** | Built end-to-end on Gemini + Firebase + Google Sign-In, designed in Google AI Studio. |
+| **Product Experience & Design** | A polished, mobile-first, console-grade UI with a live HUD and instant feedback. |
+| **Technical Implementation** | Clean context/service architecture, real-time Firestore, structured-JSON AI calls with graceful fallbacks. |
+
+---
+
+*Built with ⚡ for Vibe2Ship 2026.*

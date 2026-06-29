@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import { collection, query, where, onSnapshot, doc, getDoc, updateDoc, setDoc, deleteDoc, getDocs } from 'firebase/firestore';
+import { collection, query, where, onSnapshot, doc, getDoc, updateDoc, setDoc, deleteDoc, getDocs, addDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../config/firebase';
 import { useAuth } from './AuthContext';
 import { PENALTY_CONSTANTS } from '../utils/constants';
@@ -163,6 +163,17 @@ export function QuestProvider({ children }) {
         }
 
         await setDoc(userRef, updates, { merge: true });
+
+        // Log the coin penalty so it appears in Rewards history
+        if (PENALTY_CONSTANTS.SOLO_DROP_COINS > 0) {
+          await addDoc(collection(db, 'coinTransactions'), {
+            userId: user.uid,
+            amount: -Math.min(currentCoins, PENALTY_CONSTANTS.SOLO_DROP_COINS),
+            type: 'spend',
+            reason: 'Dropped a quest',
+            createdAt: serverTimestamp(),
+          });
+        }
       }
     } catch (err) {
       console.error('Failed to drop quest:', err);
@@ -214,6 +225,17 @@ export function QuestProvider({ children }) {
           coins: newCoins,
           tasksDropped: (userData.tasksDropped || 0) + totalTasks,
         });
+
+        // Log the coin penalty so it appears in Rewards history
+        if (coinPenalty > 0) {
+          await addDoc(collection(db, 'coinTransactions'), {
+            userId: user.uid,
+            amount: -Math.min(userData.coins || 0, coinPenalty),
+            type: 'spend',
+            reason: 'Deleted a quest',
+            createdAt: serverTimestamp(),
+          });
+        }
       }
     } catch (err) {
       console.error('Failed to delete mission:', err);

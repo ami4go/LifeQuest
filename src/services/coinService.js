@@ -138,10 +138,12 @@ export async function getRedemptionHistory(userId) {
 }
 
 /**
- * Award certificate bonus coins
+ * Award certificate bonus coins.
+ * `amount` is AI-significance-scaled (1-500); falls back to the flat constant.
  */
-export async function awardCertificateBonus(userId, certificateName, metadata = {}) {
-  return awardCoins(userId, CERTIFICATE_BONUS_COINS, `Certificate: ${certificateName}`, {
+export async function awardCertificateBonus(userId, certificateName, metadata = {}, amount) {
+  const coins = amount ?? CERTIFICATE_BONUS_COINS;
+  return awardCoins(userId, coins, `Certificate: ${certificateName}`, {
     ...metadata,
     category: 'certificate',
   });
