@@ -1,0 +1,667 @@
+/* ═══════════════════════════════════════════════════════
+   LIFEQUEST AI — Duel Page Styles
+   Enhanced: Wizard, Arena, Per-challenge, AI evaluation
+   ═══════════════════════════════════════════════════════ */
+
+.duel-page {
+  padding-bottom: 6rem;
+}
+
+.duel-page__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: var(--space-lg);
+}
+
+.duel-page__section {
+  margin-bottom: var(--space-xl);
+}
+
+.duel-page__section-title {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  font-size: var(--font-size-base);
+  font-weight: 700;
+  margin-bottom: var(--space-base);
+  color: var(--text-primary);
+}
+
+.duel-page__badge {
+  background: var(--glass-border);
+  color: var(--text-secondary);
+  font-size: var(--font-size-xs);
+  padding: 0.15rem 0.5rem;
+  border-radius: var(--radius-full);
+  font-weight: 700;
+}
+
+.duel-page__badge--danger {
+  background: rgba(239, 68, 68, 0.2);
+  color: var(--danger);
+}
+
+.duel-page__empty {
+  text-align: center;
+  padding: var(--space-2xl) var(--space-base);
+}
+
+.duel-page__empty-icon {
+  font-size: 3rem;
+  display: block;
+  margin-bottom: var(--space-base);
+}
+
+/* ── Duel Cards ── */
+
+.duel-card {
+  margin-bottom: var(--space-base);
+  padding: var(--space-base);
+}
+
+.duel-card--won { border-left: 3px solid var(--success); }
+.duel-card--lost { border-left: 3px solid var(--danger); opacity: 0.7; }
+
+.duel-card__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-sm);
+}
+
+.duel-card__challenger {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.duel-card__challenger > div {
+  display: flex;
+  flex-direction: column;
+}
+
+.duel-card__avatar {
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: var(--radius-full);
+  object-fit: cover;
+  border: 2px solid var(--glass-border);
+}
+
+.duel-card__avatar--sm {
+  width: 1.75rem;
+  height: 1.75rem;
+}
+
+.duel-card__avatar-fallback {
+  width: 2.25rem;
+  height: 2.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--glass-bg);
+  border-radius: var(--radius-full);
+  font-size: 1.2rem;
+  border: 2px solid var(--glass-border);
+}
+
+.duel-card__avatar-fallback--sm {
+  width: 1.75rem;
+  height: 1.75rem;
+  font-size: 0.9rem;
+}
+
+.duel-card__quest-title {
+  font-size: var(--font-size-sm);
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.duel-card__meta {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  flex-wrap: wrap;
+  margin-top: var(--space-xs);
+}
+
+.duel-card__actions {
+  display: flex;
+  gap: var(--space-sm);
+  margin-top: var(--space-base);
+}
+
+.duel-card__check {
+  font-size: 0.75rem;
+}
+
+/* ── Challenges Preview (Incoming) ── */
+
+.duel-card__challenges-preview {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+  margin: var(--space-sm) 0;
+}
+
+.duel-card__challenge-chip {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-base);
+  padding: 0.35rem 0.6rem;
+  font-size: var(--font-size-xs);
+}
+
+.duel-card__ai-tag {
+  font-size: 0.65rem;
+  background: rgba(59, 130, 246, 0.15);
+  color: var(--accent);
+  padding: 0.1rem 0.35rem;
+  border-radius: var(--radius-sm);
+  font-weight: 600;
+}
+
+/* ── Active Arena ── */
+
+.duel-card--active-arena {
+  border: 1px solid rgba(139, 92, 246, 0.3);
+}
+
+.duel-card__arena-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+}
+
+.duel-card__participants {
+  display: flex;
+  gap: var(--space-sm);
+  margin-top: var(--space-base);
+  padding: var(--space-sm) 0;
+  border-top: 1px solid var(--glass-border);
+  overflow-x: auto;
+}
+
+.duel-card__participant {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  min-width: 4rem;
+  position: relative;
+}
+
+.duel-card__participant--done {
+  opacity: 1;
+}
+
+.duel-card__participant--done::after {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border-radius: var(--radius-base);
+  border: 1px solid var(--success);
+  pointer-events: none;
+}
+
+/* ── Challenges Detail (Expanded) ── */
+
+.duel-card__challenges-detail {
+  margin-top: var(--space-base);
+  border-top: 1px solid var(--glass-border);
+  padding-top: var(--space-base);
+}
+
+.duel-card__challenge-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--space-sm);
+  border-radius: var(--radius-base);
+  margin-bottom: var(--space-xs);
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  transition: all 0.2s ease;
+}
+
+.duel-card__challenge-item--done {
+  opacity: 0.6;
+  border-color: var(--success);
+}
+
+.duel-card__challenge-info {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.duel-card__challenge-info > div {
+  display: flex;
+  flex-direction: column;
+}
+
+.duel-card__challenge-result {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+}
+
+/* ══════════════════════════════════════════════════════
+   CREATE DUEL WIZARD
+   ══════════════════════════════════════════════════════ */
+
+.duel-wizard {
+  max-height: 85vh;
+  overflow-y: auto;
+}
+
+.duel-wizard__progress {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  margin-bottom: var(--space-lg);
+  position: relative;
+  padding: 0 var(--space-base);
+}
+
+.duel-wizard__step {
+  width: 2rem;
+  height: 2rem;
+  border-radius: var(--radius-full);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--font-size-xs);
+  font-weight: 700;
+  background: var(--glass-bg);
+  border: 2px solid var(--glass-border);
+  color: var(--text-tertiary);
+  z-index: 1;
+  transition: all 0.3s ease;
+}
+
+.duel-wizard__step--active {
+  background: linear-gradient(135deg, var(--primary), var(--accent));
+  border-color: transparent;
+  color: white;
+}
+
+.duel-wizard__step--done {
+  background: var(--success);
+  border-color: transparent;
+  color: white;
+}
+
+.duel-wizard__progress-line {
+  position: absolute;
+  left: 2.5rem;
+  right: 2.5rem;
+  top: 50%;
+  height: 3px;
+  background: var(--glass-border);
+  border-radius: var(--radius-full);
+  z-index: 0;
+}
+
+.duel-wizard__progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--success), var(--primary));
+  border-radius: var(--radius-full);
+  transition: width 0.4s ease;
+}
+
+.duel-wizard__content {
+  margin-bottom: var(--space-lg);
+}
+
+.duel-wizard__nav {
+  display: flex;
+  gap: var(--space-sm);
+}
+
+/* ── Step 1: Email Rows ── */
+
+.duel-wizard__email-row {
+  display: flex;
+  gap: var(--space-xs);
+  margin-bottom: var(--space-sm);
+}
+
+.duel-wizard__email-row .input {
+  flex: 1;
+}
+
+/* ── Step 2: Mode Cards ── */
+
+.duel-wizard__modes {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+.duel-wizard__mode-card {
+  display: flex;
+  align-items: center;
+  gap: var(--space-base);
+  padding: var(--space-base);
+  background: var(--glass-bg);
+  border: 2px solid var(--glass-border);
+  border-radius: var(--radius-lg);
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.2s ease;
+}
+
+.duel-wizard__mode-card:hover {
+  border-color: var(--primary);
+  transform: translateY(-1px);
+}
+
+.duel-wizard__mode-card--active {
+  border-color: var(--primary);
+  background: rgba(139, 92, 246, 0.1);
+  box-shadow: 0 0 20px rgba(139, 92, 246, 0.15);
+}
+
+.duel-wizard__mode-icon {
+  font-size: 1.75rem;
+}
+
+.duel-wizard__mode-name {
+  font-weight: 700;
+  font-size: var(--font-size-sm);
+  color: var(--text-primary);
+  display: block;
+}
+
+/* ── Category Grid ── */
+
+.duel-wizard__category-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-xs);
+  margin-top: var(--space-xs);
+}
+
+.duel-wizard__category-grid--compact {
+  gap: 4px;
+}
+
+.duel-wizard__category-chip {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  padding: 0.35rem 0.65rem;
+  border-radius: var(--radius-full);
+  border: 1px solid var(--glass-border);
+  background: var(--glass-bg);
+  font-size: var(--font-size-xs);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.duel-wizard__category-chip--sm {
+  padding: 0.25rem 0.45rem;
+  font-size: 0.85rem;
+}
+
+.duel-wizard__category-chip:hover {
+  border-color: var(--cat-color, var(--primary));
+}
+
+.duel-wizard__category-chip--active {
+  border-color: var(--cat-color, var(--primary));
+  background: color-mix(in srgb, var(--cat-color, var(--primary)) 15%, transparent);
+  box-shadow: 0 0 10px color-mix(in srgb, var(--cat-color, var(--primary)) 20%, transparent);
+}
+
+/* ── AI Suggestions ── */
+
+.duel-wizard__suggestions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+.duel-wizard__suggestion-card {
+  padding: var(--space-sm) !important;
+}
+
+.duel-wizard__suggestion-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-xs);
+}
+
+.duel-wizard__suggestion-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: var(--space-sm);
+}
+
+/* ── Step 3: Challenge Form ── */
+
+.duel-wizard__challenge-form {
+  margin-bottom: var(--space-base);
+  padding: var(--space-base) !important;
+}
+
+.duel-wizard__challenge-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-sm);
+}
+
+.duel-wizard__field {
+  margin-bottom: var(--space-sm);
+}
+
+.duel-wizard__field label {
+  display: block;
+  margin-bottom: var(--space-xs);
+}
+
+.duel-wizard__title-row {
+  display: flex;
+  gap: var(--space-xs);
+}
+
+.duel-wizard__title-row .input {
+  flex: 1;
+}
+
+.duel-wizard__refine-btn {
+  width: 2.5rem;
+  height: 2.5rem;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+}
+
+.duel-wizard__row {
+  display: flex;
+  gap: var(--space-base);
+}
+
+.duel-wizard__ai-toggle {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: var(--space-sm);
+  background: var(--glass-bg);
+  border-radius: var(--radius-base);
+  border: 1px solid var(--glass-border);
+}
+
+.duel-wizard__toggle-label {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  cursor: pointer;
+}
+
+.duel-wizard__toggle-label input {
+  display: none;
+}
+
+.duel-wizard__toggle-switch {
+  width: 2.25rem;
+  height: 1.25rem;
+  border-radius: var(--radius-full);
+  background: var(--glass-border);
+  position: relative;
+  transition: background 0.2s ease;
+  flex-shrink: 0;
+}
+
+.duel-wizard__toggle-switch::after {
+  content: '';
+  position: absolute;
+  width: 0.9rem;
+  height: 0.9rem;
+  border-radius: var(--radius-full);
+  background: white;
+  top: 50%;
+  left: 3px;
+  transform: translateY(-50%);
+  transition: left 0.2s ease;
+}
+
+.duel-wizard__toggle-label input:checked + .duel-wizard__toggle-switch {
+  background: var(--primary);
+}
+
+.duel-wizard__toggle-label input:checked + .duel-wizard__toggle-switch::after {
+  left: calc(100% - 0.9rem - 3px);
+}
+
+/* ── Step 4: Review ── */
+
+.duel-wizard__total {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--space-base) !important;
+}
+
+.duel-wizard__review {
+  padding: var(--space-base) !important;
+}
+
+.duel-wizard__review-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--space-xs) 0;
+}
+
+.duel-wizard__review-row + .duel-wizard__review-row {
+  border-top: 1px solid var(--glass-border);
+}
+
+.duel-wizard__review-challenges {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+.duel-wizard__review-challenge {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: var(--space-sm);
+  background: var(--glass-bg);
+  border-radius: var(--radius-base);
+  border: 1px solid var(--glass-border);
+}
+
+.duel-wizard__review-challenge > div {
+  display: flex;
+  flex-direction: column;
+}
+
+/* ══════════════════════════════════════════════════════
+   AI EVALUATION RESULT
+   ══════════════════════════════════════════════════════ */
+
+.duel-eval__result {
+  text-align: center;
+}
+
+.duel-eval__score-badge {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-xs);
+  margin-bottom: var(--space-base);
+}
+
+.duel-eval__score-number {
+  font-size: 2.5rem;
+  font-weight: 900;
+  background: linear-gradient(135deg, var(--primary), var(--accent));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.duel-eval__score-label {
+  font-size: var(--font-size-sm);
+  font-weight: 700;
+  color: var(--text-secondary);
+}
+
+.duel-eval__section {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  text-align: left;
+  margin-bottom: var(--space-base);
+  padding: var(--space-sm);
+  background: var(--glass-bg);
+  border-radius: var(--radius-base);
+}
+
+.duel-eval__coins {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-sm);
+  padding: var(--space-base) !important;
+  margin-top: var(--space-base);
+}
+
+/* ── Difficulty Stars (reused) ── */
+
+.duel-form__difficulty {
+  display: flex;
+  gap: 4px;
+}
+
+.duel-form__star {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 1.25rem;
+  color: var(--text-tertiary);
+  transition: color 0.15s, transform 0.15s;
+  padding: 0;
+}
+
+.duel-form__star--active {
+  color: var(--warning);
+}
+
+.duel-form__star:hover {
+  transform: scale(1.2);
+}

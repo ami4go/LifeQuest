@@ -1,0 +1,213 @@
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { AuthProvider, useAuth } from './contexts/AuthContext';
+import { QuestProvider } from './contexts/QuestContext';
+import LandingPage from './pages/LandingPage';
+import OnboardingPage from './pages/OnboardingPage';
+import GoalIntakePage from './pages/GoalIntakePage';
+import DashboardPage from './pages/DashboardPage';
+import QuestDetailPage from './pages/QuestDetailPage';
+import ProfilePage from './pages/ProfilePage';
+import SchedulePage from './pages/SchedulePage';
+import DuelPage from './pages/DuelPage';
+import RewardsPage from './pages/RewardsPage';
+import BossBattlePage from './pages/BossBattlePage';
+import LeaderboardPage from './pages/LeaderboardPage';
+import Header from './components/layout/Header';
+import Sidebar from './components/layout/Sidebar';
+import './index.css';
+
+function ProtectedRoute({ children, requireOnboarding = true }) {
+  const { isAuthenticated, isOnboarded, loading } = useAuth();
+
+  if (loading) {
+    return (
+      <div className="loading-screen">
+        <div className="spinner spinner--lg" />
+        <p className="text-muted">Loading your quest...</p>
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return <Navigate to="/" replace />;
+  }
+
+  if (requireOnboarding && !isOnboarded) {
+    return <Navigate to="/onboarding" replace />;
+  }
+
+  return children;
+}
+
+function AppLayout({ children }) {
+  return (
+    <>
+      <Header />
+      <Sidebar />
+      <main className="page">
+        <div className="page-content container">
+          {children}
+        </div>
+      </main>
+    </>
+  );
+}
+
+function AppRoutes() {
+  const { isAuthenticated, isOnboarded } = useAuth();
+
+  return (
+    <Routes>
+      {/* Public */}
+      <Route
+        path="/"
+        element={
+          isAuthenticated ? (
+            isOnboarded ? (
+              <Navigate to="/dashboard" replace />
+            ) : (
+              <Navigate to="/onboarding" replace />
+            )
+          ) : (
+            <LandingPage />
+          )
+        }
+      />
+
+      {/* Onboarding (no nav) */}
+      <Route
+        path="/onboarding"
+        element={
+          <ProtectedRoute requireOnboarding={false}>
+            <OnboardingPage />
+          </ProtectedRoute>
+        }
+      />
+
+      {/* Goal intake (no nav) */}
+      <Route
+        path="/goals/new"
+        element={
+          <ProtectedRoute>
+            <GoalIntakePage />
+          </ProtectedRoute>
+        }
+      />
+
+      {/* Main app with nav */}
+      <Route
+        path="/dashboard"
+        element={
+          <ProtectedRoute>
+            <AppLayout>
+              <DashboardPage />
+            </AppLayout>
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/quest/:questId"
+        element={
+          <ProtectedRoute>
+            <AppLayout>
+              <QuestDetailPage />
+            </AppLayout>
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/goals"
+        element={
+          <ProtectedRoute>
+            <AppLayout>
+              <GoalIntakePage />
+            </AppLayout>
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/schedule"
+        element={
+          <ProtectedRoute>
+            <AppLayout>
+              <SchedulePage />
+            </AppLayout>
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/profile"
+        element={
+          <ProtectedRoute>
+            <AppLayout>
+              <ProfilePage />
+            </AppLayout>
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/duels"
+        element={
+          <ProtectedRoute>
+            <AppLayout>
+              <DuelPage />
+            </AppLayout>
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/rewards"
+        element={
+          <ProtectedRoute>
+            <AppLayout>
+              <RewardsPage />
+            </AppLayout>
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/boss/:missionId"
+        element={
+          <ProtectedRoute>
+            <AppLayout>
+              <BossBattlePage />
+            </AppLayout>
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/leaderboard"
+        element={
+          <ProtectedRoute>
+            <AppLayout>
+              <LeaderboardPage />
+            </AppLayout>
+          </ProtectedRoute>
+        }
+      />
+
+      {/* Catch all */}
+      <Route path="*" element={<Navigate to="/" replace />} />
+    </Routes>
+  );
+}
+
+export default function App() {
+  return (
+    <BrowserRouter>
+      <AuthProvider>
+        <QuestProvider>
+          <AppRoutes />
+        </QuestProvider>
+      </AuthProvider>
+    </BrowserRouter>
+  );
+}
