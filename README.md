@@ -7,10 +7,12 @@ LifeQuest AI turns real-life goals into a role-playing game — **missions, ques
 Built for **Vibe2Ship 2026** — Problem Statement: *The Last-Minute Life Saver*.
 
 🔗 **Live App:** https://lifequest-ai-1045306899439.asia-southeast1.run.app
-📦 **Repo:** https://github.com/ami4go/LifeQuest
-📝 **User Study:** [Survey Link](https://docs.google.com/forms/d/e/1FAIpQLSeBqRJQCVbBWFNhE5ZKi5eyNYj8RxQGI_RvApxpjswvTRWIQA/viewform)
 
-> **📱 Best experienced on a mobile phone!**
+📦 **Repo:** https://github.com/ami4go/LifeQuest
+
+📝 **User Study:** https://forms.gle/NFJmCvDLEwDUe8XJ8
+
+> ** For Best experience use it on a mobile phone!**
 
 ---
 
