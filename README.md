@@ -22,7 +22,7 @@ Built for **Vibe2Ship 2026** — Problem Statement: *The Last-Minute Life Saver*
   <img src="Demo/dashboard.png" width="180" alt="Dashboard" />
   <img src="Demo/duels.png" width="180" alt="Duels Arena" />
   <img src="Demo/leaderboard.png" width="180" alt="Leaderboard" />
-  <img src="Demo/profile.png" width="180" alt="Profile & Archetypes" />
+  <img src="Demo/lele.png" width="180" alt="Profile & Archetypes" />
 </p>
 <p align="center">
   <em>Dashboard &nbsp;•&nbsp; Duels Arena &nbsp;•&nbsp; Global Leaderboard &nbsp;•&nbsp; Profile & Archetypes</em>
