@@ -7,7 +7,7 @@
 |---|---|
 | **Deployed App** | https://lifequest-ai-1045306899439.asia-southeast1.run.app |
 | **GitHub Repo** | https://github.com/ami4go/LifeQuest |
-| **User Study** | [Survey Link](https://docs.google.com/forms/d/e/1FAIpQLSeBqRJQCVbBWFNhE5ZKi5eyNYj8RxQGI_RvApxpjswvTRWIQA/viewform) |
+| **User Study** | https://forms.gle/NFJmCvDLEwDUe8XJ8 |
 
 ---
 
