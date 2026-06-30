@@ -84,11 +84,11 @@ export default function OnboardingPage() {
     return (
       <div className="onboarding" id="onboarding-page">
         <div className="onboarding__intro container animate-fade-in-up">
-          <div className="onboarding__intro-icon animate-float">🧬</div>
-          <h1 className="h2">Discover Your <span className="text-gradient">Archetype</span></h1>
+          <div className="onboarding__intro-icon animate-float">🎯</div>
+          <h1 className="h2">What goal worries you the most <span className="text-gradient">right now?</span></h1>
           <p className="text-muted">
             Everyone avoids work for different reasons. Answer 8 quick questions
-            so our AI can personalize your entire LifeQuest experience.
+            so our AI can predict your hesitation and personalize your LifeQuest experience.
           </p>
           <div className="onboarding__archetype-preview">
             {Object.values(ARCHETYPES).map((arch) => (

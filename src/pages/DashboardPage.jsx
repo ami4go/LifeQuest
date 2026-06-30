@@ -25,7 +25,7 @@ export default function DashboardPage() {
   const { user, userData, updateUserData } = useAuth();
   const { activeQuests, completedQuests, quests, missions, loading, deleteMission, getDeletePenaltyInfo, droppedQuests } = useQuests();
   const navigate = useNavigate();
-  const [expandedMission, setExpandedMission] = useState(null);
+  const [expandedGroup, setExpandedGroup] = useState(null);
   const [xpAnimation, setXpAnimation] = useState(null);
   const [deleteModal, setDeleteModal] = useState(null);
   const [showDropped, setShowDropped] = useState(false);
@@ -67,8 +67,22 @@ export default function DashboardPage() {
     const progress = total > 0 ? Math.round((done / total) * 100) : 0;
     const isComplete = total > 0 && done === total;
     const rarity = rarityForXP(totalXP);
-    return { ...mission, missionQuests, done, total, totalXP, earnedXP, progress, isComplete, rarity };
+    
+    // Calculate Temperature based on progress and total time passed
+    const createdAt = mission.createdAt?.toDate ? mission.createdAt.toDate().getTime() : new Date().getTime();
+    const now = new Date().getTime();
+    const age = now - createdAt;
+    let temperature = 'stable';
+    if (progress > 50 && age < 3 * 86400000) {
+      temperature = 'hot';
+    } else if (progress < 20 && age > 7 * 86400000) {
+      temperature = 'cooling';
+    }
+
+    return { ...mission, missionQuests, done, total, totalXP, earnedXP, progress, isComplete, rarity, temperature };
   });
+
+  const activeMissions = missionSummaries.filter((m) => !m.isComplete);
 
   const deadlineMs = (m) => (m.deadline?.toDate ? m.deadline.toDate().getTime() : (m.deadline ? new Date(m.deadline).getTime() : Infinity));
   // Priority = soonest deadline first, then highest points
@@ -77,10 +91,48 @@ export default function DashboardPage() {
     if (da !== db) return da - db;
     return b.totalXP - a.totalXP;
   };
-  const activeMissions = missionSummaries.filter((m) => !m.isComplete).sort(sortByPriority);
-  const completedMissions = missionSummaries.filter((m) => m.isComplete).sort((a, b) => b.totalXP - a.totalXP);
-  const priorityMissions = activeMissions.slice(0, 5);
-  const visibleAll = showCount >= 999 ? activeMissions : activeMissions.slice(0, showCount);
+  
+  // Group missions by goalText (Quest Name)
+  const groupedQuests = activeMissions.reduce((acc, mission) => {
+    const key = mission.goalText || 'Side Quests';
+    if (!acc[key]) {
+      acc[key] = {
+        title: key,
+        missions: [],
+        totalXP: 0,
+        doneChallenges: 0,
+        totalChallenges: 0,
+        createdAt: mission.createdAt || Timestamp.now(),
+      };
+    }
+    acc[key].missions.push(mission);
+    acc[key].totalXP += mission.totalXP;
+    acc[key].doneChallenges += mission.done;
+    acc[key].totalChallenges += mission.total;
+    return acc;
+  }, {});
+
+  const questGroups = Object.values(groupedQuests).map(g => {
+    g.progress = g.totalChallenges > 0 ? Math.round((g.doneChallenges / g.totalChallenges) * 100) : 0;
+    
+    const createdAt = g.createdAt?.toDate ? g.createdAt.toDate().getTime() : new Date().getTime();
+    const now = new Date().getTime();
+    const age = now - createdAt;
+    g.temperature = 'stable';
+    if (g.progress > 50 && age < 3 * 86400000) g.temperature = 'hot';
+    else if (g.progress < 20 && age > 7 * 86400000) g.temperature = 'cooling';
+    
+    g.rarity = rarityForXP(g.totalXP);
+    // Sort internal missions by deadline
+    g.missions.sort(sortByPriority);
+    return g;
+  });
+
+  // Sort groups by total XP
+  questGroups.sort((a, b) => b.totalXP - a.totalXP);
+
+  const priorityGroups = questGroups.slice(0, 5);
+  const visibleAll = showCount >= 999 ? questGroups : questGroups.slice(0, showCount);
 
   const handleGeneratePlan = async () => {
     setShowPlanner(true);
@@ -137,8 +189,8 @@ export default function DashboardPage() {
     setTimeout(() => setXpAnimation(null), 2000);
   };
 
-  const toggleMission = (missionId) => {
-    setExpandedMission((prev) => (prev === missionId ? null : missionId));
+  const toggleGroup = (title) => {
+    setExpandedGroup((prev) => (prev === title ? null : title));
   };
 
   const handleDeleteClick = (mission) => {
@@ -221,25 +273,22 @@ export default function DashboardPage() {
       )}
 
       {/* Priority 5 */}
-      {priorityMissions.length > 0 && (
+      {priorityGroups.length > 0 && (
         <section className="quests__pad">
           <div className="section-head">
             <h2 className="section-head__title">
               <CalendarClock size={16} className="text-danger" /> Priority
-              <span className="section-head__count">Top {priorityMissions.length}</span>
+              <span className="section-head__count">Top {priorityGroups.length}</span>
             </h2>
           </div>
           <ul className="quest-list">
-            {priorityMissions.map((mission) => (
-              <QuestCard
-                key={mission.id}
-                mission={mission}
-                isExpanded={expandedMission === mission.id}
-                onToggle={() => toggleMission(mission.id)}
-                onCompleteQuest={handleCompleteQuest}
-                onQuestClick={(qId) => navigate(`/quest/${qId}`)}
-                onDeleteMission={() => handleDeleteClick(mission)}
-                xpAnimation={xpAnimation}
+            {priorityGroups.map((group) => (
+              <QuestGroupCard
+                key={group.title}
+                group={group}
+                isExpanded={expandedGroup === group.title}
+                onToggle={() => toggleGroup(group.title)}
+                onMissionClick={(mId) => navigate(`/mission/${mId}`)}
               />
             ))}
           </ul>
@@ -247,12 +296,12 @@ export default function DashboardPage() {
       )}
 
       {/* All active quests + count selector */}
-      {activeMissions.length > 0 && (
+      {questGroups.length > 0 && (
         <section className="quests__pad">
           <div className="section-head">
             <h2 className="section-head__title">
               <ListChecks size={16} className="text-accent" /> All Quests
-              <span className="section-head__count">{activeMissions.length}</span>
+              <span className="section-head__count">{questGroups.length}</span>
             </h2>
             <div className="count-selector">
               {[3, 5, 10].map((n) => (
@@ -269,70 +318,20 @@ export default function DashboardPage() {
             </div>
           </div>
           <ul className="quest-list">
-            {visibleAll.map((mission) => (
-              <QuestCard
-                key={mission.id}
-                mission={mission}
-                isExpanded={expandedMission === mission.id}
-                onToggle={() => toggleMission(mission.id)}
-                onCompleteQuest={handleCompleteQuest}
-                onQuestClick={(qId) => navigate(`/quest/${qId}`)}
-                onDeleteMission={() => handleDeleteClick(mission)}
-                xpAnimation={xpAnimation}
+            {visibleAll.map((group) => (
+              <QuestGroupCard
+                key={group.title}
+                group={group}
+                isExpanded={expandedGroup === group.title}
+                onToggle={() => toggleGroup(group.title)}
+                onMissionClick={(mId) => navigate(`/mission/${mId}`)}
               />
             ))}
           </ul>
         </section>
       )}
 
-      {/* Completed quests */}
-      {completedMissions.length > 0 && (
-        <section className="quests__pad">
-          <div className="section-head">
-            <h2 className="section-head__title">
-              <CheckCircle2 size={16} className="text-success" /> Completed
-              <span className="section-head__count">{completedMissions.length}</span>
-            </h2>
-          </div>
-          <ul className="quest-list">
-            {completedMissions.map((mission) => (
-              <QuestCard
-                key={mission.id}
-                mission={mission}
-                isExpanded={expandedMission === mission.id}
-                onToggle={() => toggleMission(mission.id)}
-                onCompleteQuest={handleCompleteQuest}
-                onQuestClick={(qId) => navigate(`/quest/${qId}`)}
-                onDeleteMission={() => handleDeleteClick(mission)}
-                xpAnimation={xpAnimation}
-              />
-            ))}
-          </ul>
-        </section>
-      )}
-
-      {/* Dropped / deleted */}
-      {droppedQuests.length > 0 && (
-        <section className="quests__pad">
-          <div className="section-head" onClick={() => setShowDropped(!showDropped)} style={{ cursor: 'pointer' }}>
-            <h2 className="section-head__title">
-              <Trash2 size={16} className="text-danger" /> Dropped / Deleted
-              <span className="section-head__count">{droppedQuests.length}</span>
-            </h2>
-            <span className={`quest-card__chevron ${showDropped ? 'quest-card__chevron--open' : ''}`}>▼</span>
-          </div>
-          {showDropped && (
-            <ul className="quest-list">
-              {droppedQuests.map((quest) => (
-                <li key={quest.id} className="hud-panel dropped-item">
-                  <span className="dropped-item__title">{quest.title}</span>
-                  <span className="text-danger dropped-item__xp">-{quest.xpReward || 50} XP</span>
-                </li>
-              ))}
-            </ul>
-          )}
-        </section>
-      )}
+      {/* Completed quests have been moved to Quest History */}
 
       {/* Locked boss teaser */}
       {nextRank && (
@@ -454,73 +453,59 @@ function StatChip({ icon: Icon, tint, value, label }) {
   );
 }
 
-function QuestCard({ mission, isExpanded, onToggle, onCompleteQuest, onQuestClick, onDeleteMission, xpAnimation }) {
-  const title = mission.title || mission.goalText || 'Untitled Quest';
-  const tag = mission.category || mission.tag || 'Mission';
+function QuestGroupCard({ group, isExpanded, onToggle, onMissionClick }) {
+  const getTempIcon = () => {
+    if (group.temperature === 'hot') return '🔥';
+    if (group.temperature === 'cooling') return '🧊';
+    return '🌊';
+  };
+
   return (
-    <li className={`quest-card hud-panel ring-rarity-${mission.rarity} ${mission.isComplete ? 'quest-card--done' : ''}`}>
-      <div className="quest-card__head" onClick={onToggle}>
+    <li className={`quest-card hud-panel ring-rarity-${group.rarity}`}>
+      <div className="quest-card__head" onClick={onToggle} style={{ cursor: 'pointer' }}>
         <div className="quest-card__main">
           <div className="quest-card__tags">
-            <span className={`rarity-chip rarity-chip--${mission.rarity}`}>{mission.rarity}</span>
-            <span className="quest-card__cat">{tag}</span>
+            <span className={`rarity-chip rarity-chip--${group.rarity}`}>{group.rarity}</span>
+            <span className="quest-card__cat">Quest Group</span>
+            <span className="quest-card__cat" style={{ background: 'transparent', color: 'var(--text-muted)' }}>{getTempIcon()} {group.temperature}</span>
           </div>
-          <h3 className="quest-card__title">
-            {mission.isComplete && '✅ '}{title}
+          <h3 className="quest-card__title" style={{ fontSize: '1.25rem', fontWeight: 600 }}>
+            {group.title}
           </h3>
           <p className="quest-card__meta">
-            {mission.done}/{mission.total} challenges · +{mission.totalXP.toLocaleString()} XP
+            {group.doneChallenges}/{group.totalChallenges} challenges · +{group.totalXP.toLocaleString()} XP
           </p>
         </div>
         <div className="quest-card__actions">
-          <button
-            className="quest-card__del"
-            onClick={(e) => { e.stopPropagation(); onDeleteMission(); }}
-            title="Delete quest"
-          >
-            <Trash2 size={15} />
-          </button>
-          <ChevronRight size={16} className={`quest-card__chev ${isExpanded ? 'quest-card__chev--open' : ''}`} />
+          <ChevronRight size={20} className={`quest-card__chev ${isExpanded ? 'quest-card__chev--open' : ''}`} />
         </div>
       </div>
 
       <div className="quest-card__bar-row">
         <div className="quest-card__bar">
-          <div className={`quest-card__bar-fill rarity-fill--${mission.rarity}`} style={{ width: `${mission.progress}%` }} />
+          <div className={`quest-card__bar-fill rarity-fill--${group.rarity}`} style={{ width: `${group.progress}%` }} />
         </div>
-        <span className="quest-card__pct">{mission.progress}%</span>
+        <span className="quest-card__pct">{group.progress}%</span>
       </div>
 
       {isExpanded && (
         <div className="quest-card__body">
-          {mission.missionQuests.map((quest) => (
+          {group.missions.map((mission) => (
             <div
-              key={quest.id}
-              className={`challenge-row ${quest.status === 'completed' ? 'challenge-row--done' : ''}`}
-              onClick={(e) => { e.stopPropagation(); onQuestClick(quest.id); }}
+              key={mission.id}
+              className={`challenge-row`}
+              onClick={(e) => { e.stopPropagation(); onMissionClick(mission.id); }}
             >
-              {xpAnimation?.questId === quest.id && (
-                <div className="challenge-row__xp-pop">+{xpAnimation.xp} XP ✨</div>
-              )}
-              {quest.status === 'completed' ? (
-                <span className="challenge-row__check challenge-row__check--done">✓</span>
-              ) : (
-                <button className="challenge-row__check" onClick={(e) => onCompleteQuest(quest, e)} title="Mark complete">○</button>
-              )}
               <div className="challenge-row__info">
-                <span className={`challenge-row__title ${quest.status === 'completed' ? 'challenge-row__title--done' : ''}`}>
-                  {quest.focusLocked && '🔒 '}{quest.title}
+                <span className={`challenge-row__title`}>
+                  {mission.title || 'Untitled Mission'}
                 </span>
                 <div className="challenge-row__sub">
-                  <span className="difficulty-stars">
-                    {[...Array(5)].map((_, i) => (
-                      <span key={i} className={`star ${i < quest.difficulty ? 'star--filled' : ''}`}>★</span>
-                    ))}
-                  </span>
-                  <span className="text-accent text-xs">+{quest.xpReward} XP</span>
-                  {quest.enableAIEvaluation && <span className="text-xs text-warning">🤖</span>}
+                  <span className="text-muted text-xs">{mission.done}/{mission.total} tasks</span>
+                  <span className="text-accent text-xs">+{mission.totalXP} XP</span>
                 </div>
               </div>
+              <ChevronRight size={16} className="text-muted" />
             </div>
           ))}
         </div>

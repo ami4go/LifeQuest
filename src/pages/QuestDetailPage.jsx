@@ -273,6 +273,16 @@ export default function QuestDetailPage() {
       });
     }
 
+    // Auto-complete mission check
+    const missionQuests = quests.filter((q) => q.missionId === quest.missionId);
+    const doneCount = missionQuests.filter((q) => q.status === 'completed' || q.id === questId).length;
+    if (missionQuests.length > 0 && doneCount === missionQuests.length) {
+      await updateDoc(doc(db, 'missions', quest.missionId), {
+        status: 'completed',
+        completedAt: Timestamp.now(),
+      });
+    }
+
     setXpAwarded(xpBreakdown);
     setIsProcessing(false);
   };
@@ -586,9 +596,9 @@ export default function QuestDetailPage() {
             <div className="modal__handle" />
             <div className="quest-detail__avoidance-header">
               <span className="quest-detail__avoidance-icon">🧠</span>
-              <h3 className="h4">AI noticed you're avoiding this</h3>
+              <h3 className="h4">Hesitation Detected</h3>
             </div>
-            <p className="text-sm text-muted mb-base">{avoidanceData.diagnosis}</p>
+            <p className="text-sm text-muted mb-base">Let's restore your momentum with the smallest next action. {avoidanceData.diagnosis}</p>
             <div className="glass-card glass-card--no-hover mb-base">
               <p className="text-sm font-semibold mb-sm">{avoidanceData.question}</p>
               {avoidanceData.options?.map((opt, idx) => (

@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import {
   Bell, Coins, Menu, Target, Swords, Trophy, User, Plus,
-  Award, Gift, Settings, LogOut, X,
+  Award, Gift, Settings, LogOut, X, CheckCircle2,
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useNotifications } from '../../contexts/NotificationContext';
@@ -20,6 +20,7 @@ const TABS = [
 
 const MENU = [
   { to: '/profile', icon: User, label: 'Profile' },
+  { to: '/history', icon: CheckCircle2, label: 'Quest History' },
   { to: '/duels', icon: Swords, label: 'Duels' },
   { to: '/leaderboard', icon: Trophy, label: 'Rank / Leaderboard' },
   { to: '/badges', icon: Award, label: 'Badges' },
@@ -120,14 +121,14 @@ function NotificationPanel({ open, onClose }) {
       <div className={`drawer-backdrop ${open ? 'drawer-backdrop--open' : ''}`} onClick={onClose} />
       <aside className={`notif-panel ${open ? 'notif-panel--open' : ''}`}>
         <div className="notif-panel__head">
-          <h3>Activity</h3>
+          <h3>Reality Feed</h3>
           <button className="sidemenu__close" onClick={onClose} aria-label="Close"><X size={18} /></button>
         </div>
         <div className="notif-panel__list">
           {notifications.length === 0 ? (
             <div className="notif-panel__empty">
               <Bell size={28} className="text-muted" />
-              <p className="text-muted text-sm">No activity yet. Duels, badges and rewards will show up here.</p>
+              <p className="text-muted text-sm">No momentum recorded yet. Quests, duels and rewards will show up here.</p>
             </div>
           ) : notifications.map((n) => (
             <div key={n.id} className={`notif-item ${!n.read ? 'notif-item--unread' : ''}`}>

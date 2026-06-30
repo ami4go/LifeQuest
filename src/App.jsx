@@ -15,6 +15,8 @@ import RewardsPage from './pages/RewardsPage';
 import BadgesPage from './pages/BadgesPage';
 import SettingsPage from './pages/SettingsPage';
 import LeaderboardPage from './pages/LeaderboardPage';
+import MissionDetailPage from './pages/MissionDetailPage';
+import QuestHistoryPage from './pages/QuestHistoryPage';
 import MobileShell from './components/layout/MobileShell';
 import './index.css';
 
@@ -104,6 +106,28 @@ function AppRoutes() {
           <ProtectedRoute>
             <AppLayout>
               <QuestDetailPage />
+            </AppLayout>
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/mission/:id"
+        element={
+          <ProtectedRoute>
+            <AppLayout>
+              <MissionDetailPage />
+            </AppLayout>
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/history"
+        element={
+          <ProtectedRoute>
+            <AppLayout>
+              <QuestHistoryPage />
             </AppLayout>
           </ProtectedRoute>
         }

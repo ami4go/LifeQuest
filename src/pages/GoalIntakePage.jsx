@@ -387,6 +387,13 @@ export default function GoalIntakePage() {
   return (
     <div className="goal-intake" id="goal-intake-page">
       <div className="goal-intake__input container">
+        <button 
+          className="btn btn--ghost btn--sm mb-md" 
+          onClick={() => navigate('/dashboard')}
+          style={{ alignSelf: 'flex-start', marginLeft: '-1rem' }}
+        >
+          ← Back to Dashboard
+        </button>
         <div className="goal-intake__header animate-fade-in-up">
           <span className="goal-intake__icon">🎯</span>
           <h1 className="h2">
