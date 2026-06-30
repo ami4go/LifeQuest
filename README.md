@@ -64,7 +64,7 @@ During onboarding, the AI diagnoses which archetype fits you. Every quest, tip, 
 | 😴 **Low Motivation** | Knows what to do, just can't start | Smallest possible first steps; heavy XP rewards for early momentum |
 
 <p align="center">
-  <img src="Demo/profile.png" width="220" alt="Archetype on Profile" />
+  <img src="Demo/lele.png" width="220" alt="Archetype on Profile" />
 </p>
 <p align="center"><em>Your diagnosed archetype appears on your Profile page</em></p>
 
